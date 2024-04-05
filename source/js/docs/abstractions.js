@@ -2401,13 +2401,6 @@ async function optimizeImageFile(imgFile) {
     orientationCanvas.width = width;
     orientationCanvas.height = height;
 
-    if (orientation > 4) {
-        orientationCanvas.width = height;
-        orientationCanvas.height = width;
-    }
-
-    correctCanvasOrientationInOrientationContext(orientationContext, width, height, orientation);
-
     orientationContext.drawImage(imgBitmap, 0, 0);
 
     var maxWidthOrHeight = 2592;

@@ -200,6 +200,14 @@ function validateBillingInfo() {
 
     var billingInfoComplete = true;
     
+    if (euCountryCodesList.includes(country)) { 
+        // show vat
+        $("#vat-number").show();
+    } else {
+        // hide vat
+        $("#vat-number").hide();
+    }
+
     if (!stripeValidation.num || !stripeValidation.exp || !stripeValidation.cvc) {
         $("#checkout-button").attr("disabled", true);
         billingInfoComplete = false;
@@ -386,7 +394,7 @@ var elementStyles = {
         fontSize: '16px',
         textTransform: 'lowercase',
         fontSmoothing: 'antialiased',
-        textAlign: 'center',
+        textAlign: 'left',
         height: '48px',
         lineHeight: '50px',
         ':focus': { color: '#000' },

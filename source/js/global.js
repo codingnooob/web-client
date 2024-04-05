@@ -649,22 +649,28 @@ function limitCanvasSize(width, height) {
  * @returns {Promise<ImageBitmap>} imgBitmap
  */
 async function imgFileToImgBitmap(imgFile, exif) {
-    
+
   let limMaxCanvasSize = limitCanvasSize(exif.width, exif.height);
 
   if (exif.width !== limMaxCanvasSize.width || imgFile.height !== limMaxCanvasSize.height) {
-      breadcrumb("Limited max canvas size. Image was too large.");
+    breadcrumb("Limited max canvas size. Image was too large.");
   }
 
+  let orientation;
+  if (!browserWillHandleEXIFOrientation && exif.Orientation) { orientation = exif.Orientation; }
+
+  let imgBitmapOptions = { resizeWidth: limMaxCanvasSize.width, resizeHeight: limMaxCanvasSize.height };
+  
+  if (orientation > 4) {
+    imgBitmapOptions = { resizeWidth: limMaxCanvasSize.height, resizeHeight: limMaxCanvasSize.width };
+  }
+  
   let imgBitmap;
   try {
-      imgBitmap = await createImageBitmap(imgFile, {
-          resizeWidth: limMaxCanvasSize.width,
-          resizeHeight: limMaxCanvasSize.height
-      });
+    imgBitmap = await createImageBitmap(imgFile, imgBitmapOptions);
   } catch (error) {
-      handleError("Failed to create ImageBitmap", error);
-      return null;
+    handleError("Failed to create ImageBitmap", error);
+    return null;
   }
 
   return imgBitmap;
@@ -1010,17 +1016,20 @@ async function determineBrowserEXIFOrientationTreatment() {
     // black 2x1 JPEG, with the following meta information set - EXIF Orientation: 6 (Rotated 90° CCW)
     img.src = 'data:image/jpeg;base64,/9j/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAYAAAAAAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAf/AABEIAAEAAgMBEQACEQEDEQH/xABKAAEAAAAAAAAAAAAAAAAAAAALEAEAAAAAAAAAAAAAAAAAAAAAAQEAAAAAAAAAAAAAAAAAAAAAEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8H//2Q==';
 
+    breadcrumb("[EXIF Orientation] Creating image bitmap from test image");
+
+    await promiseToWait(10);
+
+    let imgBitmap;
     try {
-      breadcrumb("[EXIF Orientation] Decoding test image");
-      await img.decode();
-      breadcrumb("[EXIF Orientation] Decoded test image");
+      imgBitmap = await createImageBitmap(img, { resizeWidth: img.width, resizeHeight: img.height });
     } catch (error) {
-      breadcrumb("[EXIF Orientation] Failed to decode test image");
-      return {};
+      handleError("[EXIF Orientation] Failed to create ImageBitmap from test image", error);
+      return null;
     }
 
     // Check if browser supports automatic image orientation:
-    browserWillHandleEXIFOrientation = img.width === 1 && img.height === 2;
+    browserWillHandleEXIFOrientation = !(imgBitmap.width === 1 && imgBitmap.height === 2);
     
     if (browserWillHandleEXIFOrientation) {
       // true == browser supports = don't rotate in js

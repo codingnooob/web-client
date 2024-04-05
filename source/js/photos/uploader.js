@@ -648,13 +648,6 @@ async function generateThumbnailsAndMetaOfImageFile(originalFile, mimeType, canv
     canvases[canvasNo].orientationCanvas.width = width;
     canvases[canvasNo].orientationCanvas.height = height;
 
-    if (orientation > 4) {
-        canvases[canvasNo].orientationCanvas.width = height;
-        canvases[canvasNo].orientationCanvas.height = width;
-    }
-
-    correctCanvasOrientationInOrientationContext(canvases[canvasNo].orientationContext, width, height, orientation);
-    
     canvases[canvasNo].orientationContext.drawImage(imgBitmap, 0, 0, width, height, 0, 0, width, height);    
 
     imgBitmap.close();

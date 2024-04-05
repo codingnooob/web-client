@@ -623,6 +623,7 @@ function resetAllVideos() {
 }
 
 function playPauseActiveVideo() {
+    if (!activePhotoID()) { return true; }
     if (!activePhotoID().startsWith("v-")) { return true; }
     
     if (isEmpty(loadedVideos[activePhotoID()])) { return true; }
@@ -642,6 +643,7 @@ $("#lightbox").on('click', 'video', playPauseActiveVideo);
 
 function muteUnmuteActiveVideo() {
 
+    if (!activePhotoID()) { return true; }
     if (!activePhotoID().startsWith("v-")) { return true; }
 
     if (isEmpty(loadedVideos[activePhotoID()])) { return true; }
