@@ -200,23 +200,13 @@ async function streamingEncrypt(fileOrBlob, keys) {
       fileStream = polyfilledReadableStream(blobToStream(fileOrBlob));
     }
 
-    var encrypted = await openpgpV5.encrypt({
+    var encryptedStream = await openpgpV5.encrypt({
         message: await openpgpV5.createMessage({ binary: fileStream }),
         passwords: keys,
         format : 'binary'
     });
-
-    var encryptedStreamReader = encrypted.getReader();
-
-    var chunks = [];
-  
-    while (true) {
-        var { done, value } = await encryptedStreamReader.read();
-        if (done) break;
-        chunks.push(value);
-    }
     
-    return new Blob(chunks, { type : "application/octet-stream" });
+    return new Response(encryptedStream, { headers: { 'Content-Type': 'application/octet-stream' } }).blob();
   
 }
   
@@ -236,23 +226,13 @@ async function streamingDecrypt(encryptedStream, keys, plaintextMimetype) {
       // refer to polyfilledReadableStream for more info on why we need this polyfill, and maybe remove in the future
       if (isFirefox) { encryptedStream = polyfilledReadableStream(encryptedStream); }
 
-      var decrypted = await openpgpV5.decrypt({
+      var decryptedStream = await openpgpV5.decrypt({
           message : await openpgpV5.readMessage({ binaryMessage: encryptedStream }),
           passwords: keys,
           format: 'binary'
       });
 
-      var decryptedStreamReader = decrypted.data.getReader();
-
-      var chunks = [];
-
-      while (true) {
-          var { done, value } = await decryptedStreamReader.read();
-          if (done) break;
-          chunks.push(value);
-      }
-      
-      return new Blob(chunks, { type : plaintextMimetype });
+      return new Response(decryptedStream.data, { headers: { 'Content-Type': plaintextMimetype } }).blob();
 
     } catch (error) { throw error; }
   

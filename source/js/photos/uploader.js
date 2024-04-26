@@ -648,6 +648,12 @@ async function generateThumbnailsAndMetaOfImageFile(originalFile, mimeType, canv
     canvases[canvasNo].orientationCanvas.width = width;
     canvases[canvasNo].orientationCanvas.height = height;
 
+    if (isRAW && orientation > 4) {
+        canvases[canvasNo].orientationCanvas.width = height;
+        canvases[canvasNo].orientationCanvas.height = width;
+        correctCanvasOrientationInOrientationContext(canvases[canvasNo].orientationContext, width, height, orientation);
+    }
+
     canvases[canvasNo].orientationContext.drawImage(imgBitmap, 0, 0, width, height, 0, 0, width, height);    
 
     imgBitmap.close();
@@ -1000,6 +1006,7 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
     }
 
     if (!originalToken) { return err("[UPLOAD] Failed to upload the encrypted original media"); }
+    originalEncryptedFile = null;
 
     try {
         var thumbnailUpload = await streamingUploadFile(thumbnailEncryptedBlob, tid + ".crypteefile");
@@ -1010,6 +1017,7 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
     }
 
     if (!thumbnailToken) { return err("[UPLOAD] Failed to upload the encrypted thumbnail media"); }
+    thumbnailEncryptedBlob = null;
 
     if (lid) {
         try {
@@ -1019,6 +1027,8 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
         } catch (error) {
             return err("[UPLOAD] Failed to upload the encrypted lightbox media", error);
         }
+
+        if (lightboxToken) { lightboxEncryptedBlob = null; }
     }
     
     // write media's meta 

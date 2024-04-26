@@ -513,6 +513,7 @@ async function encryptAndUploadFile(uploadID) {
     var fileUpload = await streamingUploadFile(encryptedFile, uploadFilename, true);
     if (!fileUpload) { return err("[UPLOAD] Failed to upload file"); }
     if (fileUpload === "exceeded") { return err("exceeded"); }
+    encryptedFile = null;
 
     activityHappened();
 
