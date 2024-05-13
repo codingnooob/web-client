@@ -2018,8 +2018,8 @@ function selectionCounts() {
 
 function wordCount(text) {
     text = text || quill.getText().trim();
-    // Splitting empty text returns a non-empty array
-    return text.length > 0 ? text.split(/\s+/).length : 0;
+    let segmenter = new Intl.Segmenter(undefined, { granularity : 'word' });
+    return [...segmenter.segment(text)].filter((segment) => segment.isWordLike).length
 }
 
 function charCount(text) {

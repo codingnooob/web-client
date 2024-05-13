@@ -447,6 +447,7 @@ body:not(.show-news) #news-card a.more { transform: translateY(16rem)  translate
 body.show-news .actionButton { opacity: 0; transform: translateY(1rem); }
 
 .newsButton { cursor: pointer; }
+.newsButton:not([hash]) { opacity: 0.15; pointer-events: none; }
 
 
 /* -----------------------------

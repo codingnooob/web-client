@@ -369,6 +369,12 @@ async function validateVAT() {
 }
 
 
+function stripeNotLoaded(error) {
+    createPopup("It seems that your browser / content blocker / dns filter is blocking <b>Stripe</b>, our payments processor from Ireland, Europe.<br><br>Please try disabling your ad blockers or dns filters if you have any, and try again.", "error");
+    handleError("[PLANS] Stripe js lib not loaded/blocked. Showed error to user.", error, "warning");
+    $("button.capacity").addClass("nostripe"); // disable capacity buttons
+}
+
 
 
 
@@ -383,7 +389,13 @@ async function validateVAT() {
 var placeholderColor = "#888";
 if (isFirefox) { placeholderColor = "#aaa"; }
 
-var stripe = Stripe('pk_live_D9FkoKTyS1dPXaHhGrMZM8be00VxCQFFx5', { apiVersion: '2020-08-27;tax_product_beta=v1', betas: ["tax_product_beta_1"] });
+var stripe;
+try {
+    stripe = Stripe('pk_live_D9FkoKTyS1dPXaHhGrMZM8be00VxCQFFx5', { apiVersion: '2020-08-27;tax_product_beta=v1', betas: ["tax_product_beta_1"] });
+} catch (e) {
+    stripeNotLoaded(e);
+}
+
 var elements = stripe.elements({fonts : [ { src: `url('https://static.crypt.ee/fonts/JosefinSans-VariableFont_wght.ttf')`, family: 'Josefin Sans' } ]});
 
 var elementStyles = {

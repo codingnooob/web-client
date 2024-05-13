@@ -88,8 +88,11 @@ function loadArticle(slug) {
         return false;
     }
 
+    var searchValue = $("#searchInput").val().trim() || "";
+
     $("body").addClass("article");
     $("main").addClass("loading");   
+
     clearSearch();
     
     var articleURL = apiROOT + "/api/kb/post?id=" + articleID;
@@ -101,6 +104,11 @@ function loadArticle(slug) {
             articleLoaded(slug);
         }
     });
+
+    let metricsMeta = {};
+    if (searchValue) { metricsMeta.helpSearchInputValue = searchValue; }
+
+    metricsIncrement("help/loadArticle/"+slug, metricsMeta);
 }
 
 function articleLoaded(slug) {
@@ -146,6 +154,8 @@ function loadTopic(topicID) {
             
         }  
     });
+
+    metricsIncrement("help/loadTopic/"+topicID);
 
     $("#results").append(articlesToAppend.join(""));
     

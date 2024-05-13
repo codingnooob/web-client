@@ -161,15 +161,19 @@ async function getLatestNews(forceShowNewsCard) {
 async function markNewsRead() {
     
     var newsHash = $(".newsButton").attr("hash");
-    
+
     // mark locally
-    try { localStorage.setItem("news", newsHash); } catch (e) {}
+    try { 
+        if (newsHash) { localStorage.setItem("news", newsHash); }
+    } catch (e) {}
     
     breadcrumb('[NEWS] Hiding news card...');
     breadcrumb('[NEWS] Marking news read...');
 
     $(".newsButton").removeClass("unread"); 
     $("body").removeClass("show-news");
+
+    if (!newsHash) { return; }
 
     // mark on server
     await api("user-readnews", {}, { newsID : newsHash }, "POST");
@@ -179,6 +183,8 @@ async function markNewsRead() {
 }
 
 function showLatestNewsCard() {
+    var newsHash = $(".newsButton").attr("hash");
+    if (!newsHash) { return; }
     breadcrumb('[NEWS] Displaying news card. ');
     $("body").addClass("show-news");
 }

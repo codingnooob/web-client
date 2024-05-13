@@ -998,7 +998,19 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
     var originalToken, lightboxToken, thumbnailToken;
 
     try {
-        var originalUpload = await streamingUploadFile(originalEncryptedFile, uploadID + ".crypteefile");
+
+        // if the photo is larger than 4mb, upload using chunks,
+        // otherwise, upload in one go, this seems to save time
+        // in signing & coordinating smaller uploads
+        // we'll shave off approx 2-2.5s from the average save time of a photo under 4mb
+
+        var originalUpload;
+        if (originalEncryptedFile.size > 4000000) {
+            originalUpload = await streamingUploadFile(originalEncryptedFile, uploadID + ".crypteefile");
+        } else {
+            originalUpload = await uploadFile(originalEncryptedFile, uploadID + ".crypteefile");
+        }
+
         if (typeof originalUpload === "string") { return err(originalUpload); }
         originalToken = originalUpload.token;
     } catch (error) {
@@ -1009,7 +1021,7 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
     originalEncryptedFile = null;
 
     try {
-        var thumbnailUpload = await streamingUploadFile(thumbnailEncryptedBlob, tid + ".crypteefile");
+        var thumbnailUpload = await uploadFile(thumbnailEncryptedBlob, tid + ".crypteefile");
         if (typeof thumbnailUpload === "string") { return err(thumbnailUpload); }
         thumbnailToken = thumbnailUpload.token;
     } catch (error) {
@@ -1021,7 +1033,7 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
 
     if (lid) {
         try {
-            var lightboxUpload = await streamingUploadFile(lightboxEncryptedBlob, lid + ".crypteefile");
+            var lightboxUpload = await uploadFile(lightboxEncryptedBlob, lid + ".crypteefile");
             if (typeof lightboxUpload === "string") { return err(lightboxUpload); }
             lightboxToken = lightboxUpload.token;
         } catch (error) {
@@ -1030,7 +1042,7 @@ async function encryptAndUploadMedia(uploadID, upload, thumbsAndMeta, canvasNo, 
 
         if (lightboxToken) { lightboxEncryptedBlob = null; }
     }
-    
+
     // write media's meta 
     var mediaMeta = { id : uploadID, pinky : thumbsAndMeta.dominant };
     if (thumbsAndMeta.exif) { mediaMeta = { ...mediaMeta, ...thumbsAndMeta.exif }; }

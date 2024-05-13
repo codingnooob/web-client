@@ -20,22 +20,16 @@ var CrypteeClipboard = function (_Clipboard) {
         var scrollTop = this.quill.scrollingContainer.scrollTop;
         var scrollLeft = this.quill.scrollingContainer.scrollLeft;
         
-        if (isFirefox) {
-            if (e.clipboardData) {
-                if (e.clipboardData.getData('text/html')) {
-                
-                    e.preventDefault();
-                    this.container.innerHTML = e.clipboardData.getData('text/html');
-                
-                } else { this.container.focus(); }
-            } else { this.container.focus(); }
+        if (isFirefox && e.clipboardData) {
+            const htmlData = e.clipboardData.getData('text/html');
+            if (htmlData) { e.preventDefault(); this.container.innerHTML = htmlData; } else { this.container.focus(); }
         } else { this.container.focus(); }
-    
+        
         this.quill.selection.update(Quill.sources.SILENT);
 
         setTimeout(function() {
             delta = delta.concat(this.quill.clipboard.convert()).delete(range.length);
-            delta = processColorsInDelta(delta);
+            delta = cleanClipboardText(delta);
             // console.log(delta);
             this.quill.updateContents(delta, Quill.sources.USER);
             // range.length contributes to delta.length()
@@ -111,32 +105,21 @@ $(document).on('paste', function(e) {
 }); 
 
 /**
- * This removes dark mode's background-color = #121212 and color : #FFFFFF from deltas in clipboard if there's any
+ * This removes all unwanted stuff from the clipbboard text, and makes it a nicer experience to paste stuff.
  * @param {*} delta 
+ * @returns {*} delta
  */
-function processColorsInDelta(delta) {
+function cleanClipboardText(delta) {
     
     delta.ops.forEach(function(op) {
         if (op.attributes) {
-            if (shouldColorBeExcludedFromPaste(op.attributes.background)) { delete op.attributes.background; }
-            if (shouldColorBeExcludedFromPaste(op.attributes.color))      { delete op.attributes.color; }
+            delete op.attributes.background;
+            delete op.attributes.color;
+            delete op.attributes.size;
+            delete op.attributes.font;
         } 
     });
 
     return delta;
-
-}
-
-function shouldColorBeExcludedFromPaste(colorCode) {
-    colorCode = colorCode || "";
-    if (!colorCode) { return false; }
-
-    colorCode = colorCode.toLowerCase();
-    let excludedColorCodes = ["#000", "#000000", "#121212", "#fff", "#ffffff", "#f5f5f5", "black", "white"];
     
-    if (excludedColorCodes.includes(colorCode)) {
-        return true;
-    } else {
-        return false;
-    }
 }

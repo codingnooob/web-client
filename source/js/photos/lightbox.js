@@ -510,10 +510,12 @@ async function videoEnteredLightbox(id) {
         video.attr({ "loaded" : "1" });
 
         if (video) {
-            video[0].load();
-            loadedVideos[id] = { video : video[0] };
-            startListeningToVideoEvents(id);
-            calculateVideoProgress();
+            if (video[0]) {
+                video[0].load();
+                loadedVideos[id] = { video : video[0] };
+                startListeningToVideoEvents(id);
+                calculateVideoProgress();
+            }
         }
         
     } else {

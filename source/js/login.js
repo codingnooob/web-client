@@ -99,6 +99,9 @@ $("#recovery").on('click', function(event) {
 $("progress").addClass("show");
 authenticate(function(user){
 
+    // this fixes a bug where if we receive a sessionUser, it won't have a getIdTokenResult function, and the following line will fail.
+    if (!user.getIdTokenResult) { return; }
+
     // IF USER LOGGED IN WITH GOOGLE, CHECK IF USER HAS A CUSTOM CLAIM "KEYCHECK".
     // IF THEY DON'T, THIS MEANS USER SIGNED UP USING THE GOOGLE BUTTON ON THE LOGIN PAGE, 
     // AND WE NEED TO CREATE AN ENCRYPTION KEY FOR THEM. 

@@ -85,7 +85,7 @@ async function verifyMFACode() {
     } catch (error) {
         if (error.code === "auth/invalid-verification-code") {
             $("#mfa-verify-error").text("invalid code! looks like your authenticator had a difficulty scanning the qr code, or you made a typo. please double-check, try again, or re-start the process from scratch to get a new code.");
-            handleError("[MFA] Failed to enroll, invalid code.", error);
+            handleError("[MFA] Failed to enroll, invalid code.", error, "warning");
             $("#button-verify-mfa").removeClass("loading");
             return false;
         } else {

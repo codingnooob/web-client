@@ -1054,16 +1054,12 @@ PROGRESS BARS
     padding: 0;
     width: 100%;
 
-    transition-duration: 1.5s;
-    transition-property: width, background-color, opacity;
-    transition-timing-function: cubic-bezier(0.8, 0.8, 0.6, 1);
+    transition: 2s width cubic-bezier(0.8, 0.8, 0.6, 1), 0.3s background-color ease, 0.3s opacity ease;
 }
 
 .progress::-moz-progress-bar { 
     background: black !important; 
-    transition-duration: 1.5s;
-    transition-property: width, background-color, opacity;
-    transition-timing-function: cubic-bezier(0.8, 0.8, 0.6, 1);
+    transition: 2s width cubic-bezier(0.8, 0.8, 0.6, 1), 0.3s background-color ease, 0.3s opacity ease;
 }
 
 .progress::-webkit-progress-bar { background: transparent !important; }
@@ -1072,21 +1068,17 @@ PROGRESS BARS
 
 .progress::-webkit-progress-value   { 
     background: black !important;
-    transition-duration: 1.5s;
-    transition-property: width, background-color, opacity;
-    transition-timing-function: cubic-bezier(0.8, 0.8, 0.6, 1);
+    transition: 2s width cubic-bezier(0.8, 0.8, 0.6, 1), 0.3s background-color ease, 0.3s opacity ease;
 }
 
 .progress::-webkit-progress-bar     { 
-    transition-duration: 1.5s;
-    transition-property: width, background-color, opacity;
-    transition-timing-function: cubic-bezier(0.8, 0.8, 0.6, 1);
+    transition: 2s width cubic-bezier(0.8, 0.8, 0.6, 1), 0.3s background-color ease, 0.3s opacity ease;
 }
 
 .progress:indeterminate {
     transform: translateZ(0);
     appearance:progress-bar;
-    animation: progress-indeterminate 1s cubic-bezier(.65,.05,.36,1) infinite;
+    animation: progress-indeterminate 2s cubic-bezier(.65,.05,.36,1) infinite;
     background: var(--cryptee-4) linear-gradient(to right, black 50%, transparent 50%) top left/150% 150% no-repeat;
 }
 

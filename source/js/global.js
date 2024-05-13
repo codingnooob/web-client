@@ -1029,7 +1029,9 @@ async function determineBrowserEXIFOrientationTreatment() {
     }
 
     // Check if browser supports automatic image orientation:
-    browserWillHandleEXIFOrientation = !(imgBitmap.width === 1 && imgBitmap.height === 2);
+    try {
+      browserWillHandleEXIFOrientation = !(imgBitmap.width === 1 && imgBitmap.height === 2);
+    } catch (e) {}
     
     if (browserWillHandleEXIFOrientation) {
       // true == browser supports = don't rotate in js

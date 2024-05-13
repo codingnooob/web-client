@@ -340,6 +340,10 @@ body.paddle-yearly #plans::after {
     color: var(--cryptee-2)
 }
 
+.capacity.nostripe {
+    opacity: 0.5;
+    pointer-events: none !important;
+}
 
 /* -----------------------------
 -------------------------------- 

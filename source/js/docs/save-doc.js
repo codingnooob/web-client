@@ -15,16 +15,16 @@
 var idleTime = 0;
 var idleInterval = setInterval(idleTimer, 1000);
 
-// AUTOSAVE IN 4 SECONDS IF ONLINE, OR 2 SEC IF OFFLINE
+// AUTOSAVE IN ~2 SECONDS
 function idleTimer() {
     idleTime++;
     
     if (activeDocID) {
-        if (isOnline()) {
-            if (idleTime > 4) { saveDoc(); }
-        } else {
+        // if (isOnline()) {
             if (idleTime > 1) { saveDoc(); }
-        }
+        // } else {
+            // if (idleTime > 1) { saveDoc(); }
+        // }
     }
 
 }
@@ -205,6 +205,8 @@ async function saveDoc(did, inBackground, plaintextContents) {
         docSaving(did, false);
         return false;
     }
+
+    savingActiveDocMetricStartedTime[did] = Date.now();
 
     // saving active doc in foreground, and it's open in the editor, get contents from editor.
     if (did === activeDocID && !inBackground && !$("body").hasClass("no-doc")) {
@@ -453,6 +455,8 @@ async function saveDoc(did, inBackground, plaintextContents) {
 
     // move document to the top of the recents list, since it's updated now
     $(`#recents > .doc[did="${did}"]`).prependTo("#recents");
+
+    savedDocMetrics(did, docUpload, inBackground, connection);
 
     // if the user tried saving again during this save, there will be another save in the queue. 
     // (this will always be the last time user pressed save, since object will be overwritten)
@@ -990,13 +994,29 @@ async function encryptAndUploadV4Document(did, plaintextContents, inBackground) 
 
     var docUpload; 
     
-    try {
-        docUpload = await streamingUploadFile(encryptedDocBlob, did + ".crypteedoc", inBackground);
-    } catch (error) {
-        error.did = did;
-        handleError("[SAVE] Failed to encrypt V4 document", error);
-        createPopup("<b>Failed to save document!</b> Chances are this is a network problem. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
-        return false;
+    // if the doc is larger than 4mb, upload using chunks,
+    // otherwise, upload in one go, this seems to save time
+    // in signing & coordinating smaller uploads
+    // we'll shave off approx 2-2.5s from the average save time of a doc under 4mb
+
+    if (encryptedDocBlob.size > 4000000) {
+        try {
+            docUpload = await streamingUploadFile(encryptedDocBlob, did + ".crypteedoc", inBackground);
+        } catch (error) {
+            error.did = did;
+            handleError("[SAVE] Failed to encrypt / streaming upload V4 document", error);
+            createPopup("<b>Failed to save document!</b> Chances are this is a network problem. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+            return false;
+        }
+    } else {
+        try {
+            docUpload = await uploadFile(encryptedDocBlob, did + ".crypteedoc", inBackground);
+        } catch (error) {
+            error.did = did;
+            handleError("[SAVE] Failed to encrypt / upload V4 document", error);
+            createPopup("<b>Failed to save document!</b> Chances are this is a network problem. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+            return false;
+        }
     }
 
     if (docUpload && wrappedKey) {
@@ -1083,4 +1103,37 @@ async function confirmNewDoc() {
     quill.focus();
 
     return true;
+}
+
+
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+// SAVE DOC METRICS
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+let savingActiveDocMetricStartedTime = {};
+function savedDocMetrics(did, docUpload, inBackground, connection) {
+    let startedTime = savingActiveDocMetricStartedTime[did];
+    let stoppedtime = Date.now();
+    
+    let docSize = (docUpload || { size : 0 }).size || 0;
+    let tookMS = stoppedtime - startedTime;
+
+    if (!docSize) { return; }
+    if (tookMS <= 0) { return; }
+    if (inBackground) { return; }
+    if (!connection) { return; }
+
+    let sizeCategory = "";
+    if (docSize <= 100000) { sizeCategory = "<100kb"; }
+    if (docSize > 100000 && docSize <= 500000)  { sizeCategory = "100kb-500kb"; }
+    if (docSize > 500000 && docSize <= 2000000) { sizeCategory = "500kb-2mb"; }
+    if (docSize > 2000000 && docSize <= 10000000) { sizeCategory = "2mb-10mb"; }
+    if (docSize > 10000000 && docSize <= 50000000) { sizeCategory = "10mb-50mb"; }
+    if (docSize > 50000000) { sizeCategory = ">50mb"; }
+
+    metricsGauge("docSave/" + sizeCategory, tookMS);
+
 }

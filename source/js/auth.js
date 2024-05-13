@@ -112,8 +112,11 @@ function authenticate(authenticatedCallback, unauthenticatedCallback, errorCallb
             var authEndTime = (new Date()).getTime();
             var timeToAuth = (authEndTime - authStartTime) + "ms";
 
-            if (!isSessionUser) { breadcrumb("[AUTH] Got server auth in " + timeToAuth); }
-
+            if (!isSessionUser) { 
+                breadcrumb("[AUTH] Got server auth in " + timeToAuth); 
+            }
+            
+            metricsGauge("time-to-auth", (authEndTime - authStartTime), "millisecond");
             setSentryTag("time-to-auth", timeToAuth);
 
             createUserDBReferences(user, isSessionUser);
@@ -882,7 +885,7 @@ restoreUserFromLS();
 
 
 function plansUpdated() {
-    if (theUserPlan && theUserPlan !== "free") { 
+    if (theUserPlan && theUserPlan !== "free" && theUserPlan !== "gift") { 
         $("#upgrade").hide(); 
         
         $(".appButton[app='upgrade']").hide(); 
