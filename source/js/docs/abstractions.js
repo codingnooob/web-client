@@ -2018,8 +2018,14 @@ function selectionCounts() {
 
 function wordCount(text) {
     text = text || quill.getText().trim();
-    let segmenter = new Intl.Segmenter(undefined, { granularity : 'word' });
-    return [...segmenter.segment(text)].filter((segment) => segment.isWordLike).length
+    let count;
+    try {
+        let segmenter = new Intl.Segmenter(undefined, { granularity : 'word' });
+        count = [...segmenter.segment(text)].filter((segment) => segment.isWordLike).length
+    } catch (error) {
+        count = text.length > 0 ? text.split(/\s+/).length : 0;
+    }
+    return count;
 }
 
 function charCount(text) {
