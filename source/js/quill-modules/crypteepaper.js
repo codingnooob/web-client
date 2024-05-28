@@ -189,7 +189,8 @@ function enablePaperMode(paperStock, orientation, forDocLoad) {
     $("body").attr("paper-stock", paperStock);
     $("body").attr("paper-orientation", orientation);
     $("body").removeClass("split"); // disable split mode, it's not allowed in paper mode.
-    
+    $("#paper-stock-margins").text(papers[paperStock].margins + papers[paperStock].unit);
+
     paper = JSON.parse(JSON.stringify(papers[paperStock]));
     paper.orientation = orientation;
 

@@ -2398,7 +2398,7 @@ body:not([paper-stock]) #paper-mode-button ~ * {
 /* paper mode */
 
 body[paper-stock] #panel-pagesetup {
-    max-height: 18rem !important;
+    max-height: 20rem !important;
 }
 
 body[paper-stock] #continuous-mode-button {
