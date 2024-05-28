@@ -380,7 +380,14 @@ function cancelDownloads() {
 }
 
 
+async function downloadActiveDocAsUECD() {
+    
+    $("#button-download-active-doc-as-uecd").addClass("loading");
 
+    await downloadAndSaveFile(activeDocID);    
+
+    $("#button-download-active-doc-as-uecd").removeClass("loading");
+}
 
 
 
