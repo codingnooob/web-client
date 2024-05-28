@@ -1312,7 +1312,12 @@ $("#font-families-wrapper").on('click', ".font", function(event) {
     $(".fonts-list").find(".font").removeAttr("selected");
     $(this).attr("selected", true);
 
-    quillSafelyFormat("font", font);
+    let selection = getLastSelectionRange();
+    if (selection.length) {
+        quillSafelyFormat("font", font);
+    } else {
+        $(".ql-editor").attr("font", font);
+    }
     
 }); 
 
