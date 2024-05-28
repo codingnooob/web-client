@@ -22,12 +22,14 @@ var CrypteeTableData = function (_Block) {
         //set number of columns
         var columns = value.columns;
         var rows = value.rows;
+        var tablemeta = value.tablemeta;
         
         node.setAttribute('columns', columns);
         node.setAttribute('rows', rows);
+        node.setAttribute('tablemeta', tablemeta);
         
         // set it on the table if it exists
-        updateTableSpecs(tableid, columns, rows);
+        updateTableSpecs(tableid, columns, rows, tablemeta);
 
         // set tableid
         var tableid = value.tableid || newUUID(8);
@@ -44,14 +46,16 @@ var CrypteeTableData = function (_Block) {
         var columns = node.getAttribute('columns');
         var rows = node.getAttribute('rows');
         var tableid = node.getAttribute('tableid') || newUUID(8);
+        var tablemeta = node.getAttribute('tablemeta');
 
         // set it on the table if it exists
-        updateTableSpecs(tableid, columns, rows);
+        updateTableSpecs(tableid, columns, rows, tablemeta);
 
         return {
             columns: columns,
             rows: rows,
-            tableid : tableid
+            tableid : tableid,
+            tablemeta : tablemeta
         };
     };
 
@@ -186,8 +190,9 @@ var CrypteeTable = function (_Container) {
         var dataElem = $("crypteetabledata[tableid='"+tableid+"']");
         var columns = dataElem.attr("columns");
         var rows = dataElem.attr("rows");
+        var tablemeta = dataElem.attr("tablemeta");
         
-        updateTableSpecs(tableid, columns, rows);
+        updateTableSpecs(tableid, columns, rows, tablemeta);
 
         return node;
     };
@@ -281,7 +286,7 @@ Quill.register(CrypteeTableData,false);
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-function updateTableSpecs(tableid, columns, rows) {
+function updateTableSpecs(tableid, columns, rows, meta) {
     // only update if something changed, 
     // otherwise it causes an infinite feedback loop between table & tabledata.
 
@@ -289,6 +294,7 @@ function updateTableSpecs(tableid, columns, rows) {
     if (table.length) {
         var tableCols = table.attr("columns");
         var tableRows = table.attr("rows");
+        var tableMeta = table.attr("tablemeta");
         
         if (tableCols !== columns) {
             table.attr("columns", columns);
@@ -298,6 +304,11 @@ function updateTableSpecs(tableid, columns, rows) {
         if (tableRows !== rows) {
             table.attr("rows", rows);
             table[0].style.setProperty("--rows", rows);
+        }
+
+        if (tableMeta !== meta) {
+            table.attr("tablemeta", meta);
+            table[0].setAttribute("tablemeta", meta);
         }
         
     }
@@ -309,15 +320,17 @@ function updateTableSpecs(tableid, columns, rows) {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-function generateTableDelta(index, columns, rows, tableid) {
+function generateTableDelta(index, columns, rows, tableid, tablemeta) {
     var numberOfCells = columns * rows;
     var cells = "\n".repeat(numberOfCells);
     var delta = { ops : [] };
+    tablemeta = tablemeta || "none";
+
     delta.ops.push({ retain : index });
     delta.ops.push({ 
         insert : "\n", 
         attributes : { 
-            crypteetabledata : { columns : columns, rows : rows, tableid : tableid }
+            crypteetabledata : { columns : columns, rows : rows, tableid : tableid, tablemeta : tablemeta }
         }
     });
     delta.ops.push({ 
@@ -328,12 +341,12 @@ function generateTableDelta(index, columns, rows, tableid) {
     return delta;
 }
 
-function newTable(columns, rows) {
+function newTable(columns, rows, tablemeta) {
     var tableid = newUUID(8);
     var range = getLastSelectionRange();
     if (range) {
         quill.insertText(range.index, '\n', "user");
-        var tableDelta = generateTableDelta(range.index + 1, columns, rows, tableid);
+        var tableDelta = generateTableDelta(range.index + 1, columns, rows, tableid, tablemeta);
         quill.updateContents(tableDelta, "user");
         quill.setSelection(range.index + 1, "silent");
     }
@@ -776,10 +789,10 @@ function handleTableTab(range, context) {
         // can't tell if it's a table, move selection one forward
         quill.setSelection(range.index + 1); 
     } else {
-        var table = getTableRowAndColFromTableData(tableid);
+        var table = getTableRowColAndMetaFromTableData(tableid);
         var columns = table.columns;
         var rows = table.rows;
-        var cellInfo = getCellRowAndCol(tableid, cell.index());
+        var cellInfo = getCellRowColAndMeta(tableid, cell.index());
         var cellIndexOfFirstCellInRow = getCellIndexFromColAndRow(1, cellInfo.rowNo, tableid);
         var nextCellRange, nextCellQuillIndex, nextCellQuillLength;
         if (format.direction === "rtl") {
@@ -866,7 +879,7 @@ function handleUpIntoTheTable(range, context) {
     var format = quillSafelyGetFormat();
     var tableid = format.crypteetable;
     if (tableid) {
-        var table = getTableRowAndColFromTableData(tableid);
+        var table = getTableRowColAndMetaFromTableData(tableid);
         var columns = table.columns;
         var cell = $(getSelectedTableCellNode());
         var targetCell = cell.index() - columns + 1;
@@ -887,7 +900,7 @@ function handleDownIntoTheTable(range, context) {
             // it's rtl or right aligned, enter to rightmost cell in first row
             
             if (tableid) {
-                var table = getTableRowAndColFromTableData(tableid);
+                var table = getTableRowColAndMetaFromTableData(tableid);
                 var columns = table.columns;
                 // now set the cursor to the rightmost cell in first row
                 setCursorToTableCellAtIndex(tableid, columns - 1);
@@ -906,7 +919,7 @@ function handleTableUP(range, context) {
     var format = context.format;
     var tableid = format.crypteetable;
     if (tableid) {
-        var table = getTableRowAndColFromTableData(tableid);
+        var table = getTableRowColAndMetaFromTableData(tableid);
         var columns = table.columns;
                 
         // get cell info 
@@ -942,7 +955,7 @@ function handleTableDOWN(range, context) {
     // get table info
     var tableid = context.format.crypteetable;
     if (tableid) {
-        var table = getTableRowAndColFromTableData(tableid);
+        var table = getTableRowColAndMetaFromTableData(tableid);
         var columns = parseInt(table.columns);
         var rows = parseInt(table.rows);
         var tableRange = getTableRange(tableid);
@@ -1022,7 +1035,7 @@ function preventTableFromBreaking(delta, oldDelta, source) {
             
             // Let's find out more about the table first. 
             var tableid = getTableIDAtCursor();
-            var tableInfo = getCellRowAndCol(tableid);
+            var tableInfo = getCellRowColAndMeta(tableid);
             var table = $("crypteetable[tableid='"+tableid+"']");
             
             // if the table is still there
@@ -1238,14 +1251,15 @@ $("#delete-table-button").on('mouseout', function() { toggleTableWarning(false);
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-function getTableRowAndColFromTableData(tableid) {
+function getTableRowColAndMetaFromTableData(tableid) {
     var tableData = $("crypteetabledata[tableid='"+tableid+"']");
     var columns = parseInt(tableData.attr("columns"));
     var rows = parseInt(tableData.attr("rows"));
-    return { columns : columns, rows : rows };
+    var tablemeta = tableData.attr("tablemeta");
+    return { columns : columns, rows : rows, tablemeta : tablemeta };
 }
 
-function getCellRowAndCol(tableid, cellIndex) {
+function getCellRowColAndMeta(tableid, cellIndex) {
     tableid = tableid || $("#table-dropdown").attr("tableid");
     if (cellIndex) {
         if (cellIndex > -1) {
@@ -1263,10 +1277,11 @@ function getCellRowAndCol(tableid, cellIndex) {
     var tableData = $("crypteetabledata[tableid='"+tableid+"']");
     var columns = parseInt(tableData.attr("columns"));
     var rows = parseInt(tableData.attr("rows"));
+    var tablemeta = tableData.attr("tablemeta");
 
     var colNo = (cellIndex % columns) + 1;
     var rowNo = Math.ceil((cellIndex + 1) / columns);
-    return {tableid : tableid, cellIndex : cellIndex, colNo : colNo, rowNo : rowNo, columns : columns, rows : rows };
+    return {tableid : tableid, cellIndex : cellIndex, colNo : colNo, rowNo : rowNo, columns : columns, rows : rows, tablemeta : tablemeta };
 }
 
 function getCellIndexFromColAndRow(col, row, tableid) {
@@ -1290,12 +1305,12 @@ function getCellIndexFromColAndRow(col, row, tableid) {
 var tableInsertsEnabled = false;
 var insertingCells = false;
 
-function formatTable(tableid, columns, rows) {
-    var formatTableDelta = getFormatDeltaForQuillTableData(tableid, columns, rows);
+function formatTable(tableid, columns, rows, tablemeta) {
+    var formatTableDelta = getFormatDeltaForQuillTableData(tableid, columns, rows, tablemeta);
     quill.updateContents(formatTableDelta, "user");
 }
 
-function getFormatDeltaForQuillTableData(tableid, columns, rows, targetQuillIndex, delta) {
+function getFormatDeltaForQuillTableData(tableid, columns, rows, tablemeta, targetQuillIndex, delta) {
     delta = delta || {ops:[]};
 
     var tableRange = getTableRange(tableid);
@@ -1308,7 +1323,7 @@ function getFormatDeltaForQuillTableData(tableid, columns, rows, targetQuillInde
     delta.ops.push({ 
         retain : 1, 
         attributes : { 
-            crypteetabledata : { columns : columns, rows : rows, tableid : tableid } 
+            crypteetabledata : { columns : columns, rows : rows, tableid : tableid, tablemeta : tablemeta } 
         }
     });
 
@@ -1329,7 +1344,7 @@ function insertRow(cellInfo, targetQuillIndex) {
     var delta = {ops:[]};
 
     // first ops will set the columns & rows on to the tabledata element;
-    delta = getFormatDeltaForQuillTableData(cellInfo.tableid, cellInfo.columns, cellInfo.rows + 1, targetQuillIndex, delta);
+    delta = getFormatDeltaForQuillTableData(cellInfo.tableid, cellInfo.columns, cellInfo.rows + 1, cellInfo.tablemeta, targetQuillIndex, delta);
 
     delta.ops.push({ 
         insert : cells, 
@@ -1345,7 +1360,7 @@ function insertRow(cellInfo, targetQuillIndex) {
 }
 
 function insertRowAbove() {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     var cellIndexOfFirstCellInRow = getCellIndexFromColAndRow(1, cellInfo.rowNo, cellInfo.tableid);
     var targetRange = getCellRange(cellInfo.tableid, cellIndexOfFirstCellInRow);
     var targetQuillIndex = targetRange.index; // start of the first cell in the row
@@ -1353,7 +1368,7 @@ function insertRowAbove() {
 }
 
 function insertRowBelow() {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     var cellIndexOfLastCellInRow = getCellIndexFromColAndRow(cellInfo.columns, cellInfo.rowNo, cellInfo.tableid);
     var targetRange; 
     if ( cellInfo.rowNo === cellInfo.rows ) {
@@ -1395,12 +1410,13 @@ function insertColRight() {
 
 function insertCol(insertWhere) {
     
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     var cellsInCurrentColumn = [];
     var currentColumn = cellInfo.colNo;
     var tableid = cellInfo.tableid;
     var columns = cellInfo.columns;
     var rows = cellInfo.rows;
+    var tablemeta = cellInfo.tablemeta;
     var table = $("crypteetable[tableid='"+tableid+"']");
 
     table.children().each(function(cellIndex) {
@@ -1415,7 +1431,7 @@ function insertCol(insertWhere) {
     var lastTargetIndex = 0;
     var delta = {ops:[]};
 
-    formatTable(tableid, columns + 1, rows);
+    formatTable(tableid, columns + 1, rows, tablemeta);
 
     cellsInCurrentColumn.forEach(function(cell, i) {
         if (insertWhere === "left") { 
@@ -1452,7 +1468,7 @@ function insertCol(insertWhere) {
 
 
 function toggleColumnHighlight(highlight) {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     if (!cellInfo) { return; }
 
     var targetCol = cellInfo.colNo;
@@ -1479,7 +1495,7 @@ function toggleColumnHighlight(highlight) {
 }
 
 function toggleRowHighlight(highlight) {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     if (!cellInfo) { return; }
 
     var targetRow = cellInfo.rowNo;
@@ -1506,7 +1522,7 @@ function toggleRowHighlight(highlight) {
 }
 
 function toggleTableWarning(warn) {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     if (!cellInfo) { return; }
     
     var tableid = cellInfo.tableid;
@@ -1519,12 +1535,13 @@ function toggleTableWarning(warn) {
 
 
 function deleteSelectedRow() {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
 
     var targetRow = cellInfo.rowNo;
     var tableid = cellInfo.tableid;
     var columns = cellInfo.columns;
     var rows = cellInfo.rows;
+    var tablemeta = cellInfo.tablemeta;
 
     var table = $("crypteetable[tableid='"+tableid+"']");
     
@@ -1541,19 +1558,20 @@ function deleteSelectedRow() {
     
     quill.update(); // this is to ensure we get the new table range after cells are deleted
 
-    formatTable(tableid, columns, rows - 1);
+    formatTable(tableid, columns, rows - 1, tablemeta);
     tableOperationsInProgress = false;
 
     setCursorToTableCellAtIndex(tableid, cellInfo.cellIndex);
 }
 
 function deleteSelectedCol() {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
 
     var targetCol = cellInfo.colNo;
     var tableid = cellInfo.tableid;
     var columns = cellInfo.columns;
     var rows = cellInfo.rows;
+    var tablemeta = cellInfo.tablemeta;
     
     var table = $("crypteetable[tableid='"+tableid+"']");
     
@@ -1570,7 +1588,7 @@ function deleteSelectedCol() {
 
     quill.update(); // this is to ensure we get the new table range after cells are deleted
 
-    formatTable(tableid, columns - 1, rows);
+    formatTable(tableid, columns - 1, rows, tablemeta);
     tableOperationsInProgress = false;
 
     setCursorToTableCellAtIndex(tableid, cellInfo.cellIndex);
@@ -1579,7 +1597,7 @@ function deleteSelectedCol() {
 
 
 function deleteSelectedTable() {
-    var cellInfo = getCellRowAndCol();
+    var cellInfo = getCellRowColAndMeta();
     var tableid = cellInfo.tableid;
     deleteTable(tableid);
 }

@@ -373,61 +373,61 @@ FONTS / FONT DROPDOWN
 .ql-font-arial,
 #font-families-wrapper .fonts-list .font[font="arial"] .name,
 #font-families-wrapper .fonts-list .font[font="arial"] .examples {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Arial', sans-serif !important;
 }
 
 .ql-font-comic-sans-ms,
 #font-families-wrapper .fonts-list .font[font="comic-sans-ms"] .name,
 #font-families-wrapper .fonts-list .font[font="comic-sans-ms"] .examples {
-    font-family: 'Comic Sans MS', sans-serif;
+    font-family: 'Comic Sans MS', sans-serif !important;
 }
 
 .ql-font-courier,
 #font-families-wrapper .fonts-list .font[font="courier"] .name,
 #font-families-wrapper .fonts-list .font[font="courier"] .examples {
-    font-family: 'Courier', sans-serif;
+    font-family: 'Courier', sans-serif !important;
 }
 
 .ql-font-georgia,
 #font-families-wrapper .fonts-list .font[font="georgia"] .name,
 #font-families-wrapper .fonts-list .font[font="georgia"] .examples {
-    font-family: 'Georgia', sans-serif;
+    font-family: 'Georgia', sans-serif !important;
 }
 
 .ql-font-helvetica,
 #font-families-wrapper .fonts-list .font[font="helvetica"] .name,
 #font-families-wrapper .fonts-list .font[font="helvetica"] .examples {
-    font-family: 'Helvetica', sans-serif;
+    font-family: 'Helvetica', sans-serif !important;
 }
 
 .ql-font-josefin-sans,
 #font-families-wrapper .fonts-list .font[font="josefin-sans"] .name,
 #font-families-wrapper .fonts-list .font[font="josefin-sans"] .examples {
-    font-family: 'Josefin Sans', sans-serif;
+    font-family: 'Josefin Sans', sans-serif !important;
 }
 
 .ql-font-palatino,
 #font-families-wrapper .fonts-list .font[font="palatino"] .name,
 #font-families-wrapper .fonts-list .font[font="palatino"] .examples {
-    font-family: 'Palatino', sans-serif;
+    font-family: 'Palatino', sans-serif !important;
 }
 
 .ql-font-tahoma,
 #font-families-wrapper .fonts-list .font[font="tahoma"] .name,
 #font-families-wrapper .fonts-list .font[font="tahoma"] .examples {
-    font-family: 'Tahoma', sans-serif;
+    font-family: 'Tahoma', sans-serif !important;
 }
 
 .ql-font-times-new-roman,
 #font-families-wrapper .fonts-list .font[font="times-new-roman"] .name,
 #font-families-wrapper .fonts-list .font[font="times-new-roman"] .examples {
-    font-family: 'Times New Roman', sans-serif;
+    font-family: 'Times New Roman', sans-serif !important;
 }
 
 .ql-font-verdana,
 #font-families-wrapper .fonts-list .font[font="verdana"] .name,
 #font-families-wrapper .fonts-list .font[font="verdana"] .examples {
-    font-family: 'Verdana', sans-serif;
+    font-family: 'Verdana', sans-serif !important;
 }
 
 /* L10N FONTS */
@@ -435,20 +435,20 @@ FONTS / FONT DROPDOWN
 .ql-font-arimo,
 #font-families-wrapper .fonts-list .font[font="arimo"] .name,
 #font-families-wrapper .fonts-list .font[font="arimo"] .examples {
-    font-family: 'Arimo', sans-serif;
+    font-family: 'Arimo', sans-serif !important;
 }
 
 .ql-font-inter,
 #font-families-wrapper .fonts-list .font[font="inter"] .name,
 #font-families-wrapper .fonts-list .font[font="inter"] .examples {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .ql-font-markazi,
 #font-families-wrapper .fonts-list .font[font="markazi"] .name,
 #font-families-wrapper .fonts-list .font[font="markazi"] .examples {
     font-size: 20px;
-    font-family: 'Markazi', sans-serif;
+    font-family: 'Markazi', sans-serif !important;
 }
 
 /* FONT EXAMPLES */
@@ -1041,6 +1041,54 @@ crypteetablecell * {
     line-height: initial;
 }
 
+
+
+/* -----------------------------
+-------------------------------- 
+ 
+TABLE META 
+ 
+--------------------------------
+----------------------------- */
+
+crypteetable {
+    --crypteetable-rounded-borders-radius : 0.5rem;
+}
+
+crypteetable[tablemeta~='appearance-rounded-borders']                                                   { border-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-child(1)                     { border-top-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(1)                { border-bottom-right-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="2"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(2)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="3"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(3)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="4"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(4)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="5"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(5)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="6"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(6)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="7"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(7)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="8"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(8)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="9"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(9)   { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="10"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(10) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="11"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(11) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="12"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(12) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="13"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(13) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="14"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(14) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="15"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(15) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="16"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(16) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="17"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(17) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="18"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(18) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="19"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(19) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+crypteetable[columns="20"][tablemeta~='appearance-rounded-borders'] crypteetablecell:nth-last-child(20) { border-bottom-left-radius: var(--crypteetable-rounded-borders-radius); }
+
+
+
+
+
+/* -----------------------------
+-------------------------------- 
+ 
+TABLE DROPDOWN 
+ 
+--------------------------------
+----------------------------- */
 
 
 
