@@ -779,7 +779,8 @@ function sidebarOpened() {
         if (!isTouch) { quill.blur(); }
     } catch (error) {}
 
-    sidebarOpenedClosedRecalcPaperOverflow();
+    // This prevents jumping etc. We only need to recalculate once the sidebar is closed.
+    // sidebarOpenedClosedRecalcPaperOverflow();
 }
 
 /**
