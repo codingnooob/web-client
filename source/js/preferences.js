@@ -120,10 +120,10 @@ try {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-var defaultFont = "josefin-sans"; 
+var defaultFont = "inter"; 
 try {
-    defaultFont = localStorage.getItem("defaultFont") || "josefin-sans";
-    if (!defaultFont) { defaultFont = "josefin-sans"; }
+    defaultFont = localStorage.getItem("defaultFont") || "inter";
+    if (!defaultFont) { defaultFont = "inter"; }
 } catch (e) {}
 
 
