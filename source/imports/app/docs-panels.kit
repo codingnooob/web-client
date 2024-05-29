@@ -1,19 +1,32 @@
 <div class="panel centered hidden" id="panel-new-doc">
     <h3>NEW DOCUMENT</h3>
-    <p>what would you like to name it?</p>
-    <input type="search" id="new-doc-input" class="darkback" placeholder="untitled document" autocomplete="off">
+    <p class="gray">what would you like to name it?</p>
+    <div class="creation-folder-and-input">
+        <p id="new-doc-target-folder"></p>
+        <input type="search" id="new-doc-input" class="darkback" placeholder="untitled document" autocomplete="off" spellcheck="false">
+    </div>
     <div id="new-doc-recos"></div>
-    <p id="new-doc-target-folder"></p>
-    <button class="confirm" id="confirmNewDocButton" onclick="confirmNewDoc();"><img src="../assets/cross.svg" alt="close" title="create new document"></button>
+    <button class="confirm" id="confirmNewDocButton" onclick="confirmNewDoc();">
+        <!-- @import "../../assets/doc-blank.svg" -->
+        blank document
+    </button>
+    <button class="confirm" id="confirmNewTemplatedDocButton" onclick="confirmNewDocFromTemplate();">
+        <!-- @import "../../assets/doc-template.svg" -->
+        use a template
+    </button>
+    <small class="hints"></small>
 </div>
 
 <div class="panel centered hidden" id="panel-copy-doc" did="">
     <h3>MAKE A COPY</h3>
     <p>what would you like to name it?</p>
-    <input type="search" id="copy-doc-input" class="darkback" placeholder="untitled document" autocomplete="off">
+    <div class="creation-folder-and-input">
+        <p id="copy-doc-target-folder"></p>
+        <input type="search" id="copy-doc-input" class="darkback" placeholder="untitled document" autocomplete="off" spellcheck="false">
+    </div>
     <div id="copy-doc-recos"></div>
-    <p id="copy-doc-target-folder"></p>
     <button class="confirm" id="confirmCopyDocButton" onclick="confirmCopyDoc();"><img src="../assets/cross.svg" alt="close" title="copy document"></button>
+    <small class="hints"></small>
 </div>
 
 <div class="panel centered hidden" id="panel-new-folder">

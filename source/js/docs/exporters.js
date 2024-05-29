@@ -105,6 +105,7 @@ async function exportAsECD(useUserKey) {
 
     try {
         var plaintextDocDelta = quill.getContents();
+        plaintextDocDelta = addDocumentMetadataToDelta(plaintextDocDelta);
         stringifiedPlaintextDocDelta = JSON.stringify(plaintextDocDelta);
     } catch (error) {
         handleError("[EXPORT ECD] Failed to stringify document contents", error);

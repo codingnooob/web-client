@@ -169,7 +169,7 @@ var mobilePaperMode = false;
  * @param {('portrait'|'landscape')} orientation The paper orientation (portrait or landscape)
  * @param {Boolean} [forDocLoad] Pass true, if we're enabling paper mode because a new doc's loading. This will skip saving paper mode meta
  */
-function enablePaperMode(paperStock, orientation, forDocLoad) {
+async function enablePaperMode(paperStock, orientation, forDocLoad) {
     orientation = orientation || "portrait";
     forDocLoad = forDocLoad || false;
 
@@ -179,6 +179,12 @@ function enablePaperMode(paperStock, orientation, forDocLoad) {
         paperStock = paperStock || "usletter";
     } else {
         paperStock = paperStock || "a4";
+    }
+
+    let currentPaperStock = $("body").attr("paper-stock");
+    if (paperStock === currentPaperStock) { 
+        breadcrumb('[PAPER] No need to change/enable paper stock, we already have the correct stock');
+        return;
     }
 
     breadcrumb('[PAPER] Enabled Paper Mode with: ' + paperStock + "(" + orientation + ")" );
@@ -241,15 +247,22 @@ function enablePaperMode(paperStock, orientation, forDocLoad) {
 
     hideMulticolOverflowPage();
 
-    if (!forDocLoad) {
-        // if we're not loading the doc, but switching a doc from continuous mode to paper mode, save paper mode meta to catalog & server
-        saveDocumentPaperSizeAndOrientation(activeDocID, paperStock, orientation);
-    }
-
-    setTimeout(function () {
-        calculatePaperOverflow();
-    }, 1000);
+    await promiseToWait(900);
     
+    calculatePaperOverflow();
+
+    // this is because when a doc is loaded for the first time, 
+    // if the doc is using paper mode, when we enable paper mode, we'll make a bunch of changes to the doc using calculatePaperOverflow, 
+    // which affects the DOM, then fires off a 900ms timer, and it will then trigger quill's text-change.
+    // text-change checks for loadingDoc, and doesn't unnecessarily try to save. 
+    
+    // to prevent this, for paper mode documents, 
+    // we consider the doc "loaded" after the calculatePaperOverflow fires for the last time, 
+    // a total of 1s later.
+
+    await promiseToWait(100);
+    
+    if (forDocLoad) { loadingDoc = false; }
 }
 
 
@@ -305,11 +318,6 @@ async function disablePaperMode(forDocLoad) {
         $("#preview-beta-popup").remove();
     }
 
-    if (!forDocLoad) {
-        // if we're not loading the doc, but switching a doc from paper mode to continuous mode, save paper mode meta to catalog & server
-        saveDocumentPaperSizeAndOrientation(activeDocID, "", "");
-    }
-    
 }
 
 /**

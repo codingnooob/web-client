@@ -55,8 +55,9 @@ function inIframe () {
   }
 }
 
+var isIniFrame = inIframe();
 setSentryTag("in-iframe", inIframe());
-
+$("body").toggleClass("iframe", isIniFrame); 
 
 function isRetina() { return window.devicePixelRatio > 1; }
 setSentryTag("retina", isRetina());
@@ -588,7 +589,7 @@ function getImageMimetypeFromUint8Array(uInt8Array) {
  * Creates an image blob from the canvas using the provided parameters. 
  * @param {*} canvas Canvas Element to Use
  * @param {number} quality (0 - 1)
- * @param {('image/jpeg'|'image/png')} [format] defaults to image/jpeg  
+ * @param {('image/jpeg'|'image/png'|'image/webp')} [format] defaults to image/jpeg  
  * @returns {Promise <Blob>} imageBlob
  */
 async function canvasToBlob(canvas, quality, format) {
@@ -1268,7 +1269,7 @@ function inactivityTimeout () {
  * @param {*} promise 
  * @param {*} ms 
  */
-function promiseTimeout(promise, ms){
+function promiseAbortWithTimeout(promise, ms){
 
   return Promise.race([promise, promiseToWait(ms) ]);
   

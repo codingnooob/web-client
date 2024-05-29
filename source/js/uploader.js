@@ -72,13 +72,17 @@ function addUploadVariantToUploader(filename, bytesize) {
     var isLightbox  = uploadID.startsWith("l-");
     var isThumbnail = uploadID.startsWith("t-");
     var isDocOrFile = uploadID.startsWith("d-");
+    var isTemplate  = uploadID.startsWith("dt-");
+    var isTemplateThumbnail = uploadID.startsWith("dtt-");
 
-    if (isOriginal)  { variant = "original";  }
-    if (isLightbox)  { variant = "lightbox";  }
-    if (isThumbnail) { variant = "thumbnail"; }
-    if (isDocOrFile) { variant = "docorfile"; }
+    if (isOriginal)          { variant = "original";  }
+    if (isLightbox)          { variant = "lightbox";  }
+    if (isThumbnail)         { variant = "thumbnail"; }
+    if (isDocOrFile)         { variant = "docorfile"; }
+    if (isTemplate)          { variant = "template";  }
+    if (isTemplateThumbnail) { variant = "templatethumb"; }
 
-    if (!["original", "lightbox", "thumbnail", "docorfile"].includes(variant)) { 
+    if (!["original", "lightbox", "thumbnail", "docorfile", "template", "templatethumb"].includes(variant)) { 
         handleError("[UPLOADER] Invalid variant parameter!", {filename : filename}, "warning"); 
         return false; 
     }

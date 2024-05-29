@@ -15,13 +15,13 @@
 var idleTime = 0;
 var idleInterval = setInterval(idleTimer, 1000);
 
-// AUTOSAVE IN ~2 SECONDS
+// AUTOSAVE IN ~2-3 SECONDS
 function idleTimer() {
     idleTime++;
     
     if (activeDocID) {
         // if (isOnline()) {
-            if (idleTime > 1) { saveDoc(); }
+            if (idleTime > 2) { saveDoc(); }
         // } else {
             // if (idleTime > 1) { saveDoc(); }
         // }
@@ -170,11 +170,13 @@ async function checkAndRunSaveQueueForDoc(did) {
  * @param {string} [did] optional document id, otherwise active doc's id is used 
  * @param {boolean} [inBackground] whether to save in the background or not (provide a did if it's in the background)
  * @param {*} [plaintextContents] contents you get from quill.getContents(), optionally provided (i.e. when we're in background), or we get this from quill itself.
+ * @param {Object} [additionalDocMetaToSet] additional metadata to pass into setDocMeta at the end of save. (i.e. we get title and folder id from newDoc)
  */
-async function saveDoc(did, inBackground, plaintextContents) {
+async function saveDoc(did, inBackground, plaintextContents, additionalDocMetaToSet) {
     
     inBackground = inBackground || false;
     did = did || activeDocID;
+    additionalDocMetaToSet = additionalDocMetaToSet || {};
     
     // there's no open doc, and this is a foreground save
     if (!inBackground && $("body").hasClass("no-doc")) {
@@ -222,7 +224,7 @@ async function saveDoc(did, inBackground, plaintextContents) {
         return false;
     }
 
-    // add document metadata to the delta (i.e. document fonts etc)
+    // add document metadata to the delta (i.e. document fonts, paper mode etc)
     plaintextContents = addDocumentMetadataToDelta(plaintextContents);
 
     // are we already trying to save the same doc? 
@@ -298,11 +300,14 @@ async function saveDoc(did, inBackground, plaintextContents) {
         var encryptedTags = docTags.tags;
         var decryptedTags = docTags.decryptedTags;        
 
-        var serverMeta = { 
+        var serverMeta = {
+            docid : did, 
             size : docSize,
             generation : docGen,
             tags : encryptedTags 
         };
+
+        serverMeta = {...serverMeta, ...additionalDocMetaToSet}
 
         var catalogMeta = { 
             size : docSize,
@@ -353,7 +358,7 @@ async function saveDoc(did, inBackground, plaintextContents) {
     if (!startedOffline && (!connection || isEmpty(docUpload) || !metaSavedToServer) && !docToSave.offline) {
         if (remainingStorage <= 0) {
             breadcrumb("[SAVE] Failed to save document, out of storage. Will save it offline instead.");
-            createPopup("<b>Couldn't save document, because your Cryptee storage is full!</b><br>Your document will be saved to this device's offline storage instead, and uploaded once you have enough free storage available.<button class='bold white' onclick='goToUpgrade();'>switch to a larger plan</button>", "error");
+            createPopup(`<b>Couldn't save document, because your Cryptee storage is full!</b><br>Your document will be saved to this device's offline storage instead, and uploaded once you have enough free storage available.<button class='bold white' onclick='goToUpgrade();'>upgrade to a larger plan</button>`, "error");
         } else {
             breadcrumb("[SAVE] Failed to save document, no connection. Will save it offline instead.");
             createPopup("<b>Couldn't save document, no internet connection!</b> Seems like you're not connected to the internet. Your document will be saved to this device's offline storage, and uploaded once your connectivity is restored.", "error");
@@ -638,7 +643,9 @@ async function newDoc(parentFID, plaintextTitle, plaintextDeltas, did, inBackgro
         // THIS PART IS ( & SHOULD BE ) THE SAME AS POST-LOAD OPERATIONS
         // true = force saves the document offline.
 
-        await loadedDocPrepareEditor(docToSave, did, plaintextDeltas, connection, true);
+        let forceSaveOfflineDoc = true;
+        if (getAppPreference("docs", "auto-offline-new-docs") == "online-first"){ forceSaveOfflineDoc = false; }
+        await loadedDocPrepareEditor(docToSave, did, plaintextDeltas, connection, forceSaveOfflineDoc, true);
 
         // new docs are always LTR unless user changes it. for now.
         // don't use quillSafelyFormat here, since we don't know what the selection range will look like.
@@ -649,29 +656,8 @@ async function newDoc(parentFID, plaintextTitle, plaintextDeltas, did, inBackgro
 
         //
         // Now that the editor is emptied, user can start typing etc,
-        // in the meantime, we save the rest of the meta to the server if we're connected
+        // in the meantime, we save the doc to the server if we're connected
         //
-
-        if (connection) {
-            breadcrumb('[NEW DOC] Saving new doc meta to server');
-            metaSavedToServer = await setDocMeta(did, {
-                docid: did, 
-                fid : parentFID,
-                generation : docGen, 
-                tags : encryptedTags,
-                title : encryptedStringifiedTitle
-            });
-            
-            if (!metaSavedToServer) {
-                handleError("[NEW DOC] Failed to set new doc's meta.", {did:did});
-                createPopup("<b>Failed to create new document!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
-            } else {
-                // doc's meta saved to server successfully, we can remove it from offline catalog safely now. 
-                // edge case averted. if user's connection is spotty / goes offline again right here, the upcoming saveDoc below will save it offline again if necessary.
-                breadcrumb('[NEW DOC] Saved new doc meta to server, will delete the offline failsafe now.');
-                await removeDocFromOfflineCatalog(did);
-            }
-        }
 
         // 
         // if we're not connected, saveDoc will move forward with an offline save –
@@ -682,7 +668,10 @@ async function newDoc(parentFID, plaintextTitle, plaintextDeltas, did, inBackgro
         // loadedDocPrepareEditor sets this to false, since it changes editor contents. we'll have to set it to true to force a save
         docChanged(did, true);
 
-        await saveDoc();
+        await saveDoc(did, false, plaintextDeltas, {
+            fid : parentFID,
+            title : encryptedStringifiedTitle
+        });
 
         return true;
 
@@ -1070,18 +1059,20 @@ function removeSaveFromUploadsPanel(did) {
 
 
 /**
- * User confirmed creating a new doc
+ * User confirmed creating a new doc. Optionally provide title and targetFID to make it easier to create templated docs
+ * @param {String} title 
+ * @param {String} targetFID
  */
-async function confirmNewDoc() {
-    var title = $("#new-doc-input").val().trim();
+async function confirmNewDoc(title, targetFID) {
+    title = title || $("#new-doc-input").val().trim();
     if (!title){
         $("#new-doc-input").trigger("focus");
         return;
     }
 
-    var targetFID = activeFolderID || "f-uncat";
+    targetFID = targetFID || activeFolderID || "f-uncat";
 
-    $("#confirmNewDocButton").addClass("loading");
+    $("#panel-new-doc .confirm").addClass("loading");
     $("#newDocButton").addClass("loading");
     $("#new-doc-input").trigger("blur");
     hidePanels();
@@ -1096,7 +1087,7 @@ async function confirmNewDoc() {
 
     await newDoc(targetFID,title);
 
-    $("#confirmNewDocButton").removeClass("loading");
+    $("#panel-new-doc .confirm").removeClass("loading");
     $("#newDocButton").removeClass("loading");
     $("#new-doc-input").val("");
 
@@ -1105,6 +1096,92 @@ async function confirmNewDoc() {
     return true;
 }
 
+
+let resolveNewDocFromTemplatePromise;
+async function confirmNewDocFromTemplate() {
+    var title = $("#new-doc-input").val().trim();
+    if (!title){ return; }
+
+    $("#new-doc-input").trigger("blur");
+    
+    var targetFID = activeFolderID || "f-uncat";
+    
+    breadcrumb('[CONFIRM NEW DOC FROM TEMPLATE] Showing template gallery');
+    showView('view-template-gallery');
+
+    let templateID = await new Promise((resolve, reject) => { resolveNewDocFromTemplatePromise = resolve; });
+    if (!templateID) {
+        breadcrumb('[CONFIRM NEW DOC FROM TEMPLATE] User closed template gallery');
+        hideActiveView();
+        hidePanels();
+        return false; 
+    }
+    
+    let templatePaperStock = $("input[name='template-mode']:checked").attr("mode");
+    
+    breadcrumb('[CONFIRM NEW DOC FROM TEMPLATE] User chose : ' + templateID + " with " + templatePaperStock);
+    
+    $(".button-use-template").addClass("loading");
+    $("#template-" + templateID + " .button-use-template").addClass("wipe green");
+
+    let templateJSON = {};
+
+    if (templateID.startsWith("dt-")) {
+        try {
+            let templateFromCatalog = await getTemplateFromCatalog(templateID);
+            templateJSON = templateFromCatalog.deltas;
+        } catch (error) {
+            templateJSON = {};
+            handleError('[CONFIRM NEW DOC FROM TEMPLATE] Failed to load template from catalog', error);
+        }
+    } else {
+        try {
+            let templatesResponse = await fetch(apiROOT + "/api/static/cryptee-docs-templates/" + templateID + ".uecd");
+            templateJSON = await templatesResponse.json();
+        } catch (error) {
+            templateJSON = {};
+            handleError('[CONFIRM NEW DOC FROM TEMPLATE] Failed to load template JSON', error);
+        }
+    }
+
+    if (!templateJSON || isEmpty(templateJSON)) {
+        breadcrumb('[CONFIRM NEW DOC FROM TEMPLATE] Failed to load template JSON');
+        hideActiveView();
+        hidePanels();
+
+        $(".button-use-template").removeClass("loading");
+        $("#template-" + templateID + " .button-use-template").removeClass("wipe green");
+        return false;
+    }
+
+    breadcrumb('[CONFIRM NEW DOC FROM TEMPLATE] Loaded template successfully, will create doc and folder');
+
+    // if the target folder is inbox, make sure it exists.
+    if (targetFID === "f-uncat") {   
+        var inboxFolder = await getFolderFromCatalog("f-uncat");
+        if (isEmpty(inboxFolder)) {
+            await newFolder("","Inbox","f-uncat");
+        }
+    }
+    
+    await newDoc(targetFID, title, templateJSON);
+
+    // loadedDocPrepareEditor (which gets called in newDoc) will already set the paper stock type based on if the document itself has paper stock.
+    // cryptee templates don't have paper stock built in so that users can choose it themselves.
+    // this means we'll have to manually set the paper stock type again here based on the document's meta.
+    // it's technically setting paperstock type twice, but that's okay, since if it's A4, setting it to A4 again doesn't do anything
+    
+    if (templatePaperStock === "continuous") { 
+        disablePaperMode(true);
+    } else {
+        enablePaperMode(templatePaperStock, "portrait", true);
+    }
+
+    breadcrumb('[CONFIRM NEW DOC FROM TEMPLATE] Created new doc from template successfully');
+
+    return true;
+
+}
 
 
 ////////////////////////////////////////////////

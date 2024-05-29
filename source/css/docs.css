@@ -1575,6 +1575,7 @@ DROPDOWNS
 
 .dropdown.for-files               .hide-for-files  { display: none; }
 .dropdown.for-active-folder       .hide-for-activefolder { display : none; }
+.dropdown:not(.for-active-doc)    .only-for-activedoc { display: none; }
 
 .dropdown.saving       .disabled-while-saving,
 .dropdown.for-reserved .disabled-for-reserved,
@@ -1604,6 +1605,22 @@ body.focus-mode .dropdown .disabled-for-empty-editor,
     display: none;
 }
 
+.dropdown button .tag {
+    color: var(--cryptee-4);
+    font-size: 0.75rem;
+    margin-top: 0rem;
+    float: right;
+    text-align: center;
+    user-select: none !important;
+}
+
+.dropdown button .tag.green {
+    color: var(--cryptee-green);
+}
+
+.dropdown button.is-hidden-on-live-env {
+    width: 18rem;
+}
 
 /* -----------------------------
 -------------------------------- 
@@ -1772,7 +1789,23 @@ button[id^="panel-button"].active i::before { content: "\EB98"; }
     width: 100%;
 }
 
+.panel button .tag {
+    background-color: var(--cryptee-4);
+    color: #000;
+    font-size: 0.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    line-height: 1.75rem;
+    border-radius: 1.75rem;
+    margin-top: 0.5rem;
+    float: right;
+    text-align: center;
+}
 
+.panel button .tag.green {
+    background-color: var(--cryptee-green);
+    color: #FFF;
+}
 
 /* MOBILE PANELS */
 /* this is a minor correction to make panels appear in the correct place for mobile editor */
@@ -2000,20 +2033,35 @@ NEW FOLDER PANEL
     height : 8.25rem;
 }
 
-#panel-new-doc, 
+#panel-new-doc {
+    top: -4rem;
+    width: 20rem;
+    height : 31.5rem;
+    max-width: 20rem;
+    max-height: 31.5rem;
+    box-sizing: border-box;
+    grid-template-rows: 2.5rem 2.5rem 3rem 8.75rem 10rem;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 3rem;
+    padding: 3rem 0;
+}
+
+#panel-new-doc > *:not(button) {
+    grid-column: 1/-1;
+}
+
 #panel-copy-doc {
     top: -4rem;
     width: 20rem;
-    height : 20rem;
+    height : 22.25rem;
     max-width: 20rem;
-    max-height: 20rem;
+    max-height: 22.25rem;
     box-sizing: border-box;
-    grid-template-rows: 2.5rem 2.5rem 3rem 6rem 3rem;
-    padding: 1.5rem;
+    grid-template-rows: 2.5rem 2.5rem 3rem 7.25rem 3rem;
+    padding: 3rem 0;
 }
 
 #link-box .confirm img,
-#panel-new-doc .confirm img,
 #panel-new-folder .confirm img {
     height: 100%;
     width: 100%;;
@@ -2032,11 +2080,30 @@ NEW FOLDER PANEL
     width: 100%;
 }
 
+#panel-new-doc h3, 
+#panel-copy-doc h3 {
+    padding: 0 3rem;
+}
+
 #panel-new-doc p, 
 #panel-copy-doc p, 
 #panel-new-doc input,
 #panel-copy-doc input {
     margin-top: 0;
+    padding: 0 3rem;
+}
+
+#panel-new-doc input,
+#panel-copy-doc input {
+    line-height: 3rem;
+    height: 3rem;
+}
+
+#panel-new-doc .hints,
+#panel-copy-doc .hints {
+    margin-top: 0.5rem;
+    text-align: center;
+    line-height: 1rem;
 }
 
 #link-box .confirm,
@@ -2058,14 +2125,44 @@ NEW FOLDER PANEL
 
 }
 
-#panel-new-doc .confirm,
+#panel-new-doc .confirm {
+    grid-column: span 1;
+
+    line-height: 1.5rem;
+    text-align: center;
+
+    padding: 0 0 0 3rem;
+    height: 9rem;
+    width: 100%;
+    
+    color: var(--cryptee-4);
+    
+    opacity: 1;
+
+    transition-property: opacity, background-color, color;
+    transition-timing-function: var(--cryptee-cb);
+    transition-duration: 0.5s;
+
+    display: block;
+
+    font-size: 0.75rem;
+    
+    background-color: transparent;
+}
+
+#panel-new-doc .confirm + .confirm {
+    padding: 0 3rem 0 0;
+}
+
 #panel-copy-doc .confirm {
     
+    grid-column: 1/-1;
+    margin: 0 1rem 0 auto;
     padding: 0.825rem;
     
-    position: absolute;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    /* position: absolute; */
+    /* bottom: 1.5rem; */
+    /* right: 1.5rem; */
     
     height: 3rem;
     width: 3rem;
@@ -2073,14 +2170,25 @@ NEW FOLDER PANEL
     border-radius: 0.25rem;
     
     background-color: var(--cryptee-green);
-    opacity: 0.7;
+    opacity: 1;
     transition-property: opacity, background-color;
     transition-timing-function: var(--cryptee-cb);
     transition-duration: 0.5s;
 }
 
-#panel-new-doc .confirm img {
-    transform: rotate(45deg);
+#panel-new-doc .confirm svg {
+    user-select: none !important;
+}
+
+#panel-new-doc .confirm svg g rect:not(:first-child),
+#panel-new-doc .confirm svg g circle,
+#panel-new-doc .confirm svg g path {
+    transition: 0.3s fill ease;
+}
+
+#panel-new-doc .confirm svg .hotkey {
+    opacity: 1;
+    transition: 0.3s opacity ease;
 }
 
 #panel-copy-doc .confirm img { display: none !important; }
@@ -2104,32 +2212,33 @@ NEW FOLDER PANEL
     pointer-events: none !important;
 }
 
-#panel-new-doc input:placeholder-shown ~ .confirm,
-#panel-copy-doc input:placeholder-shown ~ .confirm {
-    opacity: 0.2;
+#panel-new-doc:has(input:placeholder-shown) .confirm,
+#panel-copy-doc:has(input:placeholder-shown) .confirm {
+    opacity: 0.15 !important;
     pointer-events: none !important;
-    background-color: var(--cryptee-2);
 }
 
 #new-doc-recos, 
 #copy-doc-recos { 
     margin-top: 0;
     display: block; 
+    
+    padding: 0.75rem 1rem 0 1.125rem;
+    margin-bottom: 1rem;
+
+    transition: 0.3s border ease;
 }
 
 #new-doc-recos time, 
 #copy-doc-recos time {
     display: block;
     box-sizing: border-box;
-    background-color: var(--cryptee-1);
-    padding: 0.625rem 0.5rem 0.325rem 0.5rem;
-    margin: 0 0 0.5rem 0;
-    border-radius: 0.25rem;
     width: 100%;
     
-    color: #FFF;
+    color: var(--cryptee-2);
     font-weight: 350;
-    line-height: 1rem;
+    font-size: 0.85rem;
+    line-height: 2rem;
     cursor: pointer;
     transition: 0.15s opacity var(--cryptee-cb);
 }
@@ -2142,41 +2251,64 @@ NEW FOLDER PANEL
     font-style: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    margin-right: 0.5rem;
+    margin-right: 1.125rem;
     margin-top: -0.125rem;
+
+    transition: 0.3s color ease;
 }
 
 #new-doc-recos time::after,
 #copy-doc-recos time::after {
     float: right;
-    content: "\EA4C";
+    content: "";
     font-family: 'remixicon' !important;
     font-style: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin-top: -0.125rem;
-    opacity: 0.5;
+    opacity: 0;
+
+    line-height: 1.5rem;
+    height: 1.5rem;
+    width: 1.5rem;
+    text-align: center;
+    border: 1px solid var(--cryptee-2);
+    border-radius: 0.25rem;
+    margin-top: 1px;
+
+    transition: 0.3s opacity ease;
 }
 
-#new-doc-recos time + time::after,
-#copy-doc-recos time + time::after {
-    content: "\EA4C\EA4C";
+#new-doc-recos:has(time.selected) time::after,
+#copy-doc-recos:has(time.selected) time::after {
+    content: "";
 }
- 
+
+#new-doc-recos:has(time.selected) ~ .confirm svg .hotkey {
+    opacity: 0;
+}
+
 #new-doc-recos time.selected,
 #copy-doc-recos time.selected {
-    background-color: #525252;
-}
-
-#new-doc-recos time.selected + time::after,
-#copy-doc-recos time.selected + time::after {
-    content: "\EA4C";
+    color: var(--cryptee-yellow);
 }
 
 #new-doc-recos time.selected::after,
 #copy-doc-recos time.selected::after {
-    content: "⏎";
-    opacity: 1;
+    content: "⏎" !important;
+    opacity: 1 !important;
+    border: 1px solid var(--cryptee-yellow);
+    animation: keyClick 1s var(--cryptee-cb) 0.5s 3;
+}
+
+#new-doc-recos:has(time.selected) ~ .hints::after {
+    color: var(--cryptee-yellow) !important;
+    content: "quickly name the doc with today's date/time" !important;
+}
+
+#new-doc-recos time:last-child,
+#copy-doc-recos time:last-child {
+    margin-bottom: 0;
 }
 
 #confirmCopyDocButton.loading img {
@@ -2207,61 +2339,193 @@ NEW FOLDER PANEL
     pointer-events: none !important;
 }
 
+#panel-new-doc .creation-folder-and-input,
+#panel-copy-doc .creation-folder-and-input {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+}
+
+#panel-new-doc .creation-folder-and-input input,
+#panel-copy-doc .creation-folder-and-input input {
+    grid-column: 1/-1;
+    grid-row: 1/2;
+
+    transition-property: padding, color;
+    transition-duration: 0.5s;
+    transition-timing-function: ease;
+}
+
+.creation-folder-and-input input::placeholder           { transition: 0.5s color ease; }
+.creation-folder-and-input input:-ms-input-placeholder  { transition: 0.5s color ease; }
+.creation-folder-and-input input::-ms-input-placeholder { transition: 0.5s color ease; }
+
+@-moz-document url-prefix() {
+    .creation-folder-and-input input::placeholder       { transition: 0.5s color ease; }
+}
+
+#panel-new-doc .creation-folder-and-input p,
+#panel-copy-doc .creation-folder-and-input p {
+    grid-column: 1/-1;
+    grid-row: 1/2;
+}
+
 #new-doc-target-folder, 
 #copy-doc-target-folder {
-    width: calc(100% - 6rem);
+    position: relative;
+    padding: 0!important;
     height: 3rem;
     line-height: 3rem;
+    font-size: 1rem;
     position: relative;
     color: var(--cryptee-2);
-
-    padding-left: 2rem;
-
-    transition: 0.3s transform ease, 0.3s height ease, 0.3s line-height ease;
-    transform: translateY(0);
+    text-align: center;
+    
     user-select: none !important;
 
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+
+    cursor: pointer;
+
+    transition-property: color;
+    transition-duration: 0.3s;
+    transition-timing-function: var(--cryptee-cb);
+    pointer-events: none;
 }
 
-#new-doc-target-folder::after, 
-#copy-doc-target-folder::after {
+#new-doc-target-folder::before,
+#copy-doc-target-folder::before {
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+
     font-family: remixicon !important;
     font-style: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     
-    content: "\ED71";
-    font-size: 1.3rem;
-    line-height: 2.75rem;
-    margin-right: 0.5rem;
-
-    position: absolute;
-    left: 0;
-
-    transition: 0.3s transform ease;
-    transform: translateY(0);
-    color: var(--cryptee-2);
+    content: "\ED67";
+    font-size: 1.25rem;
+    line-height: 2.825rem;
+    margin-left: 0.25rem;
+    pointer-events: all;
 }
 
-#new-doc-target-folder::before, 
-#copy-doc-target-folder::before {
-    font-size: 0.85rem;
-    content: "doc will be created in:";
+#new-doc-target-folder::after,
+#copy-doc-target-folder::after {
+    content: "will be created in folder: " attr(name);
     position: absolute;
-    top: -1.25rem;
-    left: 2rem;
+    top: 0rem;
+    left: 3rem;
+    font-size: 0.75rem;
+        
+    pointer-events: none !important;
+    user-select: none !important;
 
-    transition: 0.3s opacity ease;
+    line-height: 3rem;
     opacity: 0;
-    color: #FFF;
+    transform: translateX(-3rem);
+
+    transition-property: opacity, transform;
+    transition-duration: 0.5s;
+    transition-timing-function: ease;
+} 
+
+#panel-saveas-template {
+    width: 20rem;
+    height: 12rem;
+    grid-template-columns: 3rem 1fr;
+    grid-template-rows: auto;
+    column-gap: 1rem;
+    overflow: visible;
 }
 
-#copy-doc-target-folder::before {
-    content: "copy will be created in:";
+#panel-saveas-template h3, 
+#panel-saveas-template p {
+    grid-column: 1/4;
 }
+
+#panel-saveas-template input {
+    grid-row: 3/4;
+    grid-column: 1/4;
+    margin: 1.5rem 0 2rem 0;
+}
+
+#panel-saveas-template button {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 3rem;
+    color: #FFF;
+    text-align: left;
+    font-weight: 350;
+    background-color: var(--cryptee-green);
+    padding: 0.5rem;
+    margin-left: auto;
+    display: block;
+
+    opacity: 1;
+    transition-duration: 0.5s;
+    transition-timing-function: var(--cryptee-cb);
+    transition-property: transform, opacity;
+
+    grid-column: 1/2;
+    grid-row: 4/5;
+}
+
+#panel-saveas-template button img {
+    transform: rotate(135deg) scale(1);
+    height: 1.5rem;
+    width: 1.5rem;
+    margin: auto;
+    display: block;
+
+    transition-duration: 0.3s;
+    transition-timing-function: var(--cryptee-cb);
+    transition-property: transform, opacity;
+}
+
+#panel-saveas-template input:placeholder-shown ~ button {
+    opacity: 0.2;
+    pointer-events: none !important;
+}
+
+#panel-saveas-template input:placeholder-shown ~ button img {
+    opacity: 0.5;
+    transform: rotate(45deg);
+}
+
+#saveas-template-preview-image {
+    width: 6rem;
+    height: 8rem;
+    display: block;
+
+    text-indent: -8rem; /* hides broken image */
+
+    border-radius: 0.25rem;
+    background: var(--cryptee-4);
+
+    object-fit: cover;
+    object-position: top;
+
+    transition: 0.25s opacity ease;
+
+    position: absolute;
+    bottom: 1rem;
+    right: -1rem;
+
+    box-shadow: 0 1rem 2rem rgba(0,0,0,0.3);
+}
+
+#saveas-template-preview-image[src=''] {
+    background: linear-gradient(0deg, #FFF, color-mix(in srgb, #000 30%, #FFF), #FFF);
+    animation: loadingBGWipeVertical 1s linear infinite;
+    background-size: 200% 200%;
+}
+
+#saveas-template-preview-image.loaded { opacity: 0.5; background: var(--cryptee-4); }
+
+#saveas-template-preview-image[src^='blob'] { opacity: 1; }
 
 /* -----------------------------
 -------------------------------- 
@@ -3537,13 +3801,15 @@ body.offline .panel button.disabled-in-offline-mode .toggle {
 }
 
 body.offline .dropdown .disabled-in-offline-mode,
-body.offline .panel .disabled-in-offline-mode {
+body.offline .panel .disabled-in-offline-mode,
+body.offline .view .disabled-in-offline-mode {
     opacity: 0.2;
     pointer-events: none !important;
 }
 
 body.offline .dropdown::after,
-body.offline .panel::after {
+body.offline .panel::after,
+body.offline .view::after {
     font-family: 'remixicon' !important;
     font-style: normal;
     -webkit-font-smoothing: antialiased;
@@ -3561,15 +3827,26 @@ body.offline .panel::after {
     opacity: 0.3;
 }
 
+body.offline .view::after {
+    right: initial;
+    left: 0.625rem;
+}
+
+body.offline .view .corner-action {
+    display: none !important;
+}
+
 body.offline .dropdown::before,
-body.offline .panel::before {
+body.offline .panel::before,
+body.offline .view::before {
     width: calc(100% - 3.75rem);
     padding: 0.75rem 3rem 0.5rem 0.75rem;
     background-color: transparent;
 }
 
 body.offline .dropdown .delete,
-body.offline .panel .delete {
+body.offline .panel .delete,
+body.offline .view .delete {
     background-color: transparent;
 }
 
@@ -3603,7 +3880,17 @@ body.offline #blankEditor .quick-tips {
 /* sorts all offline recent documents on the top  */
 body.offline #recents .doc.offline { order: -1; }
 
+body.offline #view-template-gallery .cryptee-templates {
+    display: none !important;
+}
 
+body.offline #view-template-gallery .cryptee-templates::before {
+    display: none !important;
+}
+
+body.offline #view-template-gallery  {
+    max-height: 40rem;
+}
 
 /* -----------------------------
 -------------------------------- 
@@ -3996,6 +4283,207 @@ body:not([env]) .is-hidden-on-live-env { display: none !important; }
 }
 
 
+
+/* -----------------------------
+-------------------------------- 
+ 
+TEMPLATE GALLERY 
+ 
+--------------------------------
+----------------------------- */
+
+.template-mode {
+    border: 1px solid var(--cryptee-4);
+    border-radius: 2rem;
+    height: 2rem;
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem 0.25rem;
+}
+
+.template-mode input { display: none !important; }
+.template-mode label { 
+    height: 2rem;
+    line-height: 2rem;
+    color: var(--cryptee-4);
+    padding: 0 0.5rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    user-select: none;
+    transition: 0.3s all ease;
+}
+
+.template-mode label:has(input:checked) {
+    background-color: var(--cryptee-4);
+    color: var(--cryptee-0);
+}
+
+#view-template-gallery .user-templates,
+#view-template-gallery .cryotee-templates {
+    width: 100%;
+}
+
+#view-template-gallery .user-templates:not(:has(.template))::before {
+    content: "create docs faster with templates! click 'save as template' in the 'document' menu and your templates —which are stored encrypted— will appear here.";
+    line-height: 1.5rem;
+    color: var(--cryptee-2);
+    font-weight: 350;
+    white-space: pre;
+    display: block;
+    max-width: 100%;
+    text-wrap:balance;
+
+    padding-bottom: 2.5rem;
+}
+
+body #view-template-gallery .user-templates:not(:has(.template))::after {
+    content: "";
+    background-image: url(../imgs/in-app-guides/template-button-guide-desktop.webp);
+    width: 100%;
+    height: 14.5rem;
+    display: block;
+
+    background-position: top right;
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+body.bubble #view-template-gallery .user-templates:not(:has(.template))::after {
+    background-image: url(../imgs/in-app-guides/template-button-guide-mobile.webp);
+    height: 6rem;
+    background-position: top left;
+    background-size: 100%;
+}
+
+
+#view-template-gallery .cryptee-templates::before {
+    content: "templates by the cryptee team";
+    line-height: 1.5rem;
+    color: var(--cryptee-4);
+    font-weight: 350;
+    white-space: pre;
+    display: block;
+    max-width: 100%;
+    text-wrap:balance;
+    margin-bottom: 2rem;
+
+    border-top: 1px solid var(--cryptee-3);
+    padding-top: 2.5rem;
+}
+
+.template { 
+
+    position: relative;
+
+    background-color: var(--cryptee-folder);
+    color: var(--cryptee-4);
+    padding: 1rem;
+
+    display: grid;
+    grid-template-columns: 8rem 2fr 3fr;
+    grid-template-rows: 1fr 2rem;
+    column-gap: 1rem;
+
+    transition: 0.5s all ease; 
+    margin-bottom: 2rem;
+}
+
+.template:has(.preview-and-back:checked) {
+    grid-template-columns: 18rem 2fr 3fr;
+}
+
+.template img {
+    width: 100%;
+    aspect-ratio: 1/1.3;
+    background-color: var(--cryptee-4);
+    object-fit: cover;
+    object-position: top;
+    grid-column: 1/2;
+    grid-row: 1/-1;
+    filter: invert(0);
+}
+
+.template img[src$="crypteepaper.svg"] { filter: invert(0.8); }
+
+.template p {
+    grid-column: 2/-1;
+    grid-row: 1/2;
+}
+
+.template button {
+    line-height: 2rem;
+    margin-top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--cryptee-green);
+    border-radius: 2rem;
+    text-align: center;
+    color: #FFF;
+}
+
+.template .preview-and-back { display: none; }
+
+.template label {
+    line-height: 2rem;
+    width: 100%;
+    height: 100%;
+    background-color: var(--cryptee-1);
+    text-align: center;
+    border-radius: 2rem;
+    cursor: pointer;
+    display: block;
+}
+
+.template label::before {
+    font-family: remixicon !important;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.template label::after { content: "preview"; }
+.template:has(.preview-and-back:checked) label::before { content: "\ea58 "; }
+.template:has(.preview-and-back:checked) label::after { content: " back"; }
+
+.template .button-delete-template {
+    background-color: transparent;
+    width: 2rem;
+    height: 2rem;
+    line-height: 2.125rem;
+    text-align: center;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+
+    transition: 0.15s background-color ease;
+}
+
+.cryptee-templates .template .button-delete-template {
+    display: none !important;
+}
+
+.template.template.marked-for-deletion .name::after {
+    content: "\a will be deleted. are you sure?";
+    color: var(--cryptee-red);
+    font-weight: 900;
+    white-space: pre-wrap;
+}
+
+.template.template.marked-for-deletion .by, 
+.template.template.marked-for-deletion label, 
+.template.template.marked-for-deletion .button-use-template, 
+.template.template.marked-for-deletion .button-delete-template { 
+    display: none !important; 
+}
+
+.template:not(.marked-for-deletion) .button-cancel-delete-template,
+.template:not(.marked-for-deletion) .button-confirm-delete-template {
+    display: none !important;
+}
+
+.template .button-cancel-delete-template { background-color: var(--cryptee-1); }
+.template .button-confirm-delete-template { background-color: var(--cryptee-red); }
+
 /* -----------------------------
 -------------------------------- 
  
@@ -4027,6 +4515,8 @@ MEDIA QUERIES
         grid-row: 2/3;
         width: 100%;
     }
+
+    #view-template-gallery { max-height: calc(100% - 4rem); }
 }
 
 @media (max-width : 544px) {
@@ -4044,6 +4534,53 @@ MEDIA QUERIES
     }
 
     #panel-sort { left: 3.5rem; }
+
+    #view-template-gallery {
+        grid-template-columns: 1fr 5.5rem;
+        grid-template-rows: 5.5rem 5.5rem 1fr;
+        max-width: 20rem;
+    }
+
+    #view-template-gallery .corner-action {
+        grid-column: 1/-1;
+        grid-row: 2/3;
+        margin-left: 2rem;
+        margin-right: 2rem;
+        justify-content: space-between;
+    }
+
+    body.offline #view-template-gallery {
+        max-height: 14rem;
+    }
+
+    body.offline #view-template-gallery .view-content {
+        max-height: 18rem;
+        grid-row: 2/4;
+    }
+
+    body:not(.offline) #view-template-gallery .view-content {
+        grid-row: 3/4;
+    }
+
+    #view-template-gallery .user-templates[count="0"]::before {
+        text-align: justify;
+    }
+
+    .template {
+        display: block;
+        width: 14rem;
+        margin: 0 auto 2rem auto;
+    }
+
+    .template p { margin-bottom: 1rem; text-align: center; }
+    .template label { display: none !important; }
+
+    .template img {
+        height: 13rem;
+        width: 9rem;
+        margin: 0 auto;
+        display: block;
+    }
 }
 
 @media (max-width: 348px) {
@@ -4200,8 +4737,6 @@ ENABLE HOVERS
 
     #file-viewer-nav button:hover { opacity: 1 !important;}
 
-    #new-doc-recos time:hover { opacity: 1 !important; }
-
     /* THIS WAS OVERFLOW:HIDDEN TO PREVENT SOMETHING, BUT CAN'T REMEMBER WHAT. TEST IN WINDOWS & LINUX */
     #documentActionButtons { overflow: visible; }
 
@@ -4211,31 +4746,69 @@ ENABLE HOVERS
 
     body:not(.bubble) .quick-recent-docs .doc:hover::before {
         opacity: 1;
+        animation: keyClick 1s var(--cryptee-cb) 0.5s 3;
     }
 
-    #new-doc-target-folder:hover, 
-    #copy-doc-target-folder:hover {
-        transform: translateY(0.25rem);
-        height: 4rem;
-        line-height: 4rem;
-        /* color: #FFF; */
+    #panel-new-doc .confirm:hover svg g rect:not(:first-child),
+    #panel-new-doc .confirm:hover svg g circle,
+    #panel-new-doc .confirm:hover svg g path {
+        fill: var(--cryptee-1);
     }
 
-    #new-doc-target-folder:hover::after, 
-    #copy-doc-target-folder:hover::after {
-        transform: translateY(-0.25rem);
-    }
-
-    #new-doc-target-folder:hover::before, 
-    #copy-doc-target-folder:hover::before {
-        opacity: 1;
-    }
-
-    #panel-new-doc .confirm:hover,
     #panel-copy-doc .confirm:hover {
         opacity: 1;
     }
     
+    #new-doc-target-folder:hover, 
+    #copy-doc-target-folder:hover {
+        color: var(--cryptee-4);
+    }
+
+    #new-doc-target-folder:hover::before,
+    #copy-doc-target-folder:hover::before {
+        content: "\ED66";
+    }
+
+    #new-doc-target-folder:hover::after,
+    #copy-doc-target-folder:hover::after {
+        opacity: 1;
+        transform: translateX(0rem);
+    }
+
+    #panel-saveas-template button:hover {
+        transform: scale(0.9);
+    }
+
+    #panel-saveas-template button:hover img {
+        transform: scale(0.8) rotate(135deg);
+    }
+
+    .creation-folder-and-input p:hover + input {
+        padding-left: 6rem !important;
+        color: transparent !important;
+    }
+
+    .creation-folder-and-input p:hover + input::placeholder { color: transparent !important; }
+    .creation-folder-and-input p:hover + input:-ms-input-placeholder { color: transparent !important; }
+    .creation-folder-and-input p:hover + input::-ms-input-placeholder { color: transparent !important; }
+    
+    @-moz-document url-prefix() {
+        .creation-folder-and-input p:hover + input::placeholder    { color: transparent !important; }
+    }
+    
+    #new-doc-recos time:hover::before,
+    #copy-doc-recos time:hover::before {
+        color: var(--cryptee-yellow);
+    }
+
+    #new-doc-recos:has(time:hover) ~ .hints::after {
+        color: var(--cryptee-yellow);
+        content: "quickly name the doc with today's date/time";
+    }
+
+    .template .button-delete-template:hover {
+        background-color: var(--cryptee-red);
+    } 
 }
 
 

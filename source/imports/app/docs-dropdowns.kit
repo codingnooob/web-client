@@ -18,18 +18,8 @@
     </button>
 
     <button class="white disabled-for-reserved disabled-while-saving" onclick="showCopyDocPanel();" id="copyDocButton">
-        <i class="ri-file-copy-2-fill"></i>
+        <i class="ri-file-copy-fill"></i>
         <span>make a copy</span>
-    </button>
-
-    <button class="white disabled-in-offline-mode disabled-for-empty-editor disabled-for-activedoc disabled-while-saving" onclick="attachSelectedFileInline();">
-        <i class="ri-attachment-2"></i>
-        <span>attach / link inline</span>
-    </button>
-
-    <button class="white disabled-in-offline-mode show-for-images disabled-for-empty-editor disabled-while-saving" onclick="embedImageFromCryptee();" id="embedImageFromCrypteeButton">
-        <i class="ri-image-add-fill"></i>
-        <span>embed inline</span>
     </button>
 
     <button class="white hide-in-folders disabled-for-reserved" id="loadParentOfDocButton">
@@ -37,19 +27,39 @@
         <span>show in folder</span>
     </button>
 
+    <button class="white disabled-in-offline-mode disabled-for-empty-editor disabled-while-saving show-for-images" onclick="embedImageFromCryptee();" id="embedImageFromCrypteeButton">
+        <i class="ri-image-add-fill"></i>
+        <span>embed inline</span>
+    </button>
+
+    <button class="white disabled-in-offline-mode disabled-while-saving hide-for-files only-for-activedoc" onclick="prepareSaveAsTemplatePanel('dropdown-doc');" id="createTemplateFromActiveDocButton">
+        <i class="ri-file-copy-2-fill"></i>
+        <span>save as template</span>
+        <span class="green tag">new</span>
+    </button>
+    
+    <button class="white disabled-in-offline-mode disabled-for-empty-editor disabled-while-saving disabled-for-activedoc" onclick="attachSelectedFileInline();">
+        <i class="ri-attachment-2"></i>
+        <span>attach / link inline</span>
+    </button>
+    
     <button class="white disabled-in-offline-mode hide-for-offline-folder-or-doc hide-for-files" onclick="makeDocumentAvailableOffline();" id="makeDocOfflineButton">
         <i class="ri-download-cloud-fill"></i>
         <span>make available offline</span>
     </button>
 
-    <button class="red show-for-offline-folder-or-doc hide-for-files disabled-while-saving" onclick="prepareMakeOnlineModal('rightclick');" id="makeDocOnlineButton">
-        <i class="ri-delete-bin-4-fill"></i>
-        <span>remove from offline storage</span>
-    </button>
+    <hr>
 
     <button title="Document's ID" class="yellow is-hidden-on-live-env">
         <i class="ri-file-unknow-fill"></i>
         <span class="small monospace docid copy-on-click"></span>
+    </button>
+
+    <hr>
+
+    <button class="red show-for-offline-folder-or-doc hide-for-files disabled-while-saving" onclick="prepareMakeOnlineModal('rightclick');" id="makeDocOnlineButton">
+        <i class="ri-delete-bin-4-fill"></i>
+        <span>remove from offline storage</span>
     </button>
 
     <hr>

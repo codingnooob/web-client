@@ -8,7 +8,7 @@
  * Syncs docs in catalog to docs in server, uploads / downloads outdated stuff in offline storage
  */
 async function sync() {
-    breadcrumb('[SYNC] Starting sync...');
+    breadcrumb('[SYNC] Starting docs sync...');
 
     var docsToUpsync = [];
     var docsToDownsync = [];
@@ -23,7 +23,7 @@ async function sync() {
 
     // NOTHING TO SYNC, DONE
     if (isEmpty(docs)) {
-        breadcrumb('[SYNC] Nothing to sync, catalog is empty. Done.');
+        breadcrumb('[SYNC] No docs to sync, catalog is empty. Done.');
         return true;
     }
 
@@ -51,7 +51,7 @@ async function sync() {
     }
 
     if (!docsToDownsync.length && !docsToUpsync.length) {
-        breadcrumb('[SYNC] Nothing to sync. Done.');
+        breadcrumb('[SYNC] No docs to sync. Done.');
         return true;
     }
 
@@ -69,7 +69,7 @@ async function sync() {
     }
 
     if (!upsyncCompleted || !downsyncCompleted) {
-        handleError("[SYNC] Failed to sync.");
+        handleError("[SYNC] Failed to sync docs.");
         createPopup("Failed to sync your documents. Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
         return false;
     }
@@ -188,4 +188,112 @@ async function syncDOWN(docsToDownsync) {
     }
 
     return true;
+}
+
+let syncingTemplates = true;
+async function syncTemplates() {
+
+    breadcrumb('[SYNC] Syncing / downloading templates meta from server ...');
+
+    let catalogTemplates = await getAllTemplatesFromCatalog();
+    let serverTemplates = await getTemplates();
+    
+    breadcrumb(`[SYNC] Got ${serverTemplates.length} templates from server`);
+
+    let serverTemplateIDs = [];
+    let templatesToDownloadAndDecrypt = {};
+    let templateIDsToDeleteFromCatalog = [];
+
+    // compare generations of each template to catalog. 
+    serverTemplates.forEach(template => {
+        let tfid = template.tfid; 
+        serverTemplateIDs.push(tfid);
+        if (!catalogTemplates[tfid]) { templatesToDownloadAndDecrypt[tfid] = template; }
+    });
+
+    // check if server is missing one that we have locally in catalog.
+    // this means user deleted template from one device & server, so delete it on other devices too.
+    for (const tfid in catalogTemplates) {
+        if (!serverTemplateIDs.includes(tfid)) { templateIDsToDeleteFromCatalog.push(tfid); }
+    }
+
+    let numTemplatesToDeleteFromCatalog = templateIDsToDeleteFromCatalog.length;
+    if (!numTemplatesToDeleteFromCatalog) {
+        breadcrumb(`[SYNC] No templates to delete from catalog.`);
+    } else {
+        breadcrumb(`[SYNC] Will delete ${numTemplatesToDeleteFromCatalog} template(s) from catalog.`);
+    }
+
+    await deleteTemplatesFromCatalog(templateIDsToDeleteFromCatalog);
+
+    let numTemplatesToSyncDown = Object.keys(templatesToDownloadAndDecrypt).length;
+    if (!numTemplatesToSyncDown) {
+        breadcrumb(`[SYNC] No templates to sync.`);
+        prepareUserTemplates();
+        return;
+    } else {
+        breadcrumb(`[SYNC] We're missing ${numTemplatesToSyncDown} template(s) in catalog.`);
+    }
+
+    // if it doesn't exist in catalog, download, decrypt and add to catalog. 
+    for (const tfid in templatesToDownloadAndDecrypt) {
+    
+        let template = templatesToDownloadAndDecrypt[tfid];
+        
+        try {
+            
+            let [plaintextDeltas, thumbBlob] = await Promise.all([
+                downloadAndDecryptFile(template.tfid,  template.ttoken, "crypteedoc", null, null, null, template, true),
+                downloadAndDecryptFile(template.ttid, template.tttoken, "blob", null, "image/webp", null, null, true)
+            ]);
+
+            template.thumb = thumbBlob;
+            
+            template.deltas = plaintextDeltas;
+
+        } catch (error) {
+            error.tfid = template.tfid;
+            handleError(`[SYNC] Failed to download & decrypt template`, error);
+            continue;
+        }
+
+        if (!template.thumb || !template.deltas) {
+            handleError(`[SYNC] Failed to download & decrypt template`, {tfid: template.tfid});
+            continue;
+        }
+
+        try {
+            template.title = await decrypt(template.title, [theKey]);
+        } catch (error) {
+            error.tfid = template.tfid;
+            handleError(`[SYNC] Failed to decrypt template title`, error);
+            continue;
+        }
+
+        if (isEmpty(template.title)) {
+            handleError(`[SYNC] Decrypted template title object is empty.`, {tfid: template.tfid});
+            continue;
+        }
+
+        if (template.title) {
+            if (!template.title.data) {
+                handleError(`[SYNC] Decrypted template title data is empty.`, {tfid: template.tfid});
+                continue;
+            }
+
+            template.title = JSON.parse(template.title.data);
+        }
+
+        delete template.ttoken;
+        delete template.tttoken;
+
+        await newTemplateInCatalog(template);
+
+        breadcrumb(`[SYNC] Successfully sync'ed template ${template.tfid} to catalog`);
+        
+    }
+
+    syncingTemplates = false;
+    prepareUserTemplates();
+
 }

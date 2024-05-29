@@ -961,6 +961,8 @@ var zeroSelectionRange = {index: 0, length : 0};
 
 quill.on('text-change', function (delta, oldDelta, source) {
     
+    if (loadingDoc) { return; }
+    
     somethingChanged();
     
     lastSelectionRange = quill.getSelection() || zeroSelectionRange;

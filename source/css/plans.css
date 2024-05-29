@@ -970,6 +970,9 @@ body.dberror input
     pointer-events: none !important;
 }
 
+body.iframe #logo {
+    display: none !important;
+}
 
 
 /* -----------------------------

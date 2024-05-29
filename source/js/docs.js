@@ -111,8 +111,12 @@ function stopRightProgress(color) {
 /**
  * Updates the editor state to no document, loading doc or nothing
  * @param {('no-doc'|'loading-doc'|'')} state the editor state (no document, loading doc or nothing) 
+ * @param {Boolean} forNewDoc
  */
-function updateEditorState(state) {
+function updateEditorState(state, forNewDoc) {
+    
+    forNewDoc = forNewDoc || false;
+
     if (state) {
         $("body").addClass(state);
         quill.blur();
@@ -123,11 +127,17 @@ function updateEditorState(state) {
             $("body").removeClass("loading-doc no-doc");
             setTimeout(function () { swiper.update(); }, 100);            
         } else {
-            // so that this happens shortly after we set the editor's contents
-            setTimeout(function () {
+
+            if (!forNewDoc) {
+                // so that this happens shortly after we set the editor's contents
+                setTimeout(function () {
+                    $("body").removeClass("loading-doc no-doc");
+                    setTimeout(function () { swiper.update(); }, 100);
+                }, 300);
+            } else {
                 $("body").removeClass("loading-doc no-doc");
                 setTimeout(function () { swiper.update(); }, 100);
-            }, 300);
+            }
         }
     }
 }
@@ -569,6 +579,7 @@ async function preStartup() {
         var docs = await getAllDocsFromCatalog();
         var folders = await getAllFoldersFromCatalog();
         
+        await prepareCrypteeTemplates();
         // CHECK TO SEE IF CATALOG HAS ANYTHING IN THERE.
         // IF THERE ARE NO DOCS OR FOLDERS, SHOW BODY MESSAGE FOR DECRYPTION
         // SINCE THE LEFT PANE WILL BE EMPTY FOR TOO LONG
@@ -626,6 +637,8 @@ async function startup() {
     
     }
     
+    syncTemplates();
+
     activityHappened();
 }
 
@@ -1569,29 +1582,38 @@ function showInboxPopup() {
 
 function docNameTimeRecommendations() {
     var todaysDate = new Date();
-    var todayLocale = todaysDate.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-    var timeRightNow = todaysDate.toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
+    var todayLocaleISODate = todaysDate.toLocaleString('sv').split(" ")[0].split("-").join("/");
+    var todayLocaleWeekday = " " + todaysDate.toLocaleString(undefined, { weekday : "short" }) + " ";
+    var todayLocaleTime = todaysDate.toLocaleString(undefined, {hour : "2-digit", minute : "2-digit" });
+    
+    var todayLocale = todayLocaleISODate + todayLocaleWeekday + todayLocaleTime;
+    var compactLocale = todayLocaleISODate + " " + todayLocaleTime;
+    var shortLocale = todayLocaleISODate;
 
-    return `<time class="docreco">${todayLocale}</time><time class="docreco">${timeRightNow}</time>`;
+    return `
+    <time class="docreco">${shortLocale}</time>
+    <time class="docreco">${compactLocale}</time>
+    <time class="docreco">${todayLocale}</time>
+    `;
 }
 
 function docNameRecoUp() {
-    var selIndex = $(".docreco.selected").index() - 1;
-    $(".docreco").removeClass("selected");
+    var selIndex = $(".panel.show .docreco.selected").index() - 1;
+    $(".panel.show .docreco").removeClass("selected");
     if (selIndex >= 0) {
-        $(".docreco").eq(selIndex).addClass("selected");
+        $(".panel.show .docreco").eq(selIndex).addClass("selected");
     }
 }
 
 function docNameRecoDown() {
-    var selIndex = $(".docreco.selected").index() + 1;
-    $(".docreco").removeClass("selected");
-    $(".docreco").eq(selIndex).addClass("selected");
+    var selIndex = $(".panel.show .docreco.selected").index() + 1;
+    $(".panel.show .docreco").removeClass("selected");
+    $(".panel.show .docreco").eq(selIndex).addClass("selected");
 }
 
 function useSelectedReco(input) {
-    var reco = $(".docreco.selected").text();
-    $(".docreco").removeClass("selected");
+    var reco = $(".panel.show .docreco.selected").text();
+    $(".panel.show .docreco").removeClass("selected");
     $(input).val(reco);
 }
 
@@ -1606,18 +1628,23 @@ async function showNewDocPanel() {
     $("#new-doc-recos").html(docNameTimeRecommendations());
     var targetFID = activeFolderID || "f-uncat";
     var targetFolderName = await getFolderNameFromCatalog(targetFID);
-    $("#new-doc-target-folder").text(targetFolderName);
+    $("#new-doc-target-folder").attr("name", targetFolderName);
     togglePanel('panel-new-doc');
     $("#new-doc-input").trigger("focus");
 }
 
 $("#new-doc-input, #copy-doc-input").on('keyup', function(event) {
     if (event.key === "Enter") {
-        if ($(".docreco.selected").index() >= 0) {
+        if ($(".panel.show .docreco.selected").index() >= 0) {
             useSelectedReco(this);
         } else {
             if ($(this).attr("id") === "new-doc-input") {
-                confirmNewDoc();
+                // and if it's shift + enter
+                if (event.shiftKey) {
+                    confirmNewDocFromTemplate();
+                } else {
+                    confirmNewDoc();
+                }
             } else {
                 confirmCopyDoc();
             }
@@ -1640,7 +1667,7 @@ $("#new-doc-input, #copy-doc-input").on('keyup', function(event) {
 
 $("#new-doc-recos, #copy-doc-recos").on('click', "time", function(event) {
     var recommendation = $(this).text();
-    var input = $(this).parent().prev();
+    var input = $(this).parent().prev().find("input");
     input.val(recommendation);
 });
 
@@ -1861,3 +1888,89 @@ function setupAttentionGrabbers(buttons) {
 // This will set up all attention grabbers. 
 // If user already paid attention they will be removed in document ready 
 setupAttentionGrabbers([]);
+
+
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+// 	TEMPLATES
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+
+//
+// REMEMBER LAST TEMPLATE PAPER STOCK SELECTION PER DEVICE
+//
+
+$("input[type='radio'][name='template-mode']").on('click', function(event) {
+    $(this).attr("checked", "checked");
+    $("input[type='radio'][name='template-mode']").not(this).removeAttr("checked");
+    let templatePaper = $(this).attr("mode");
+    try { localStorage.setItem("template-paper", templatePaper); } catch (e) {}
+}); 
+
+function recallLastTemplatePaperChoice() {
+    let lastChoice;
+    try { 
+        lastChoice = localStorage.getItem("template-paper") || "continuous"; 
+    } catch (e) {
+        lastChoice = "continuous";
+    }
+
+    $("input[type='radio'][name='template-mode']").removeAttr("checked");
+    $(`input[type='radio'][name='template-mode'][mode='${lastChoice}']`).attr("checked", "checked");
+}
+
+recallLastTemplatePaperChoice();
+
+async function prepareCrypteeTemplates() {
+    
+    let templatesResponse = await fetch(apiROOT + "/api/static/cryptee-docs-templates/templates.json");
+    let templates         = await templatesResponse.json();
+    
+    let templateHTMLs = [];
+    templates.forEach(template => { templateHTMLs.push(renderTemplateForGallery(template, "cryptee")); });
+
+    $("#view-template-gallery .cryptee-templates").html(templateHTMLs.join(""));
+}
+
+async function prepareUserTemplates() {
+
+    let templatesObject = await getAllTemplatesFromCatalog();
+
+    let templates = Object.values(templatesObject);
+    templates.sort((a, b) => b.generation - a.generation);
+    
+    let templateHTMLs = [];
+    templates.forEach(template => { templateHTMLs.push(renderTemplateForGallery(template, "user")); });
+
+    $("#view-template-gallery .user-templates").html(templateHTMLs.join(""));
+}
+
+$("#view-template-gallery").on('click', 'input.preview-and-back', function(event) {
+    $("input.preview-and-back").not(this).prop("checked", false);
+    $(this).parents(".template")[0].scrollIntoView({ behavior:'smooth' });
+});
+
+
+$("#view-template-gallery").on('click', '.button-use-template', function(event) {
+    let templateID = $(this).parents(".template").attr("id").replace("template-", "");
+    resolveNewDocFromTemplatePromise(templateID);
+}); 
+
+$("#view-template-gallery").on('click', '.button-delete-template', function(event) {
+    $(this).parents(".template").addClass("marked-for-deletion");
+    // let tfid = $(this).parents(".template").attr("id").replace("template-", "");
+    // deleteTemplate(tfid);
+}); 
+
+$("#view-template-gallery").on('click', '.button-cancel-delete-template', function(event) {
+    $(this).parents(".template").removeClass("marked-for-deletion");
+    // let tfid = $(this).parents(".template").attr("id").replace("template-", "");
+    // deleteTemplate(tfid);
+}); 
+
+$("#view-template-gallery").on('click', '.button-confirm-delete-template', function(event) {
+    let tfid = $(this).parents(".template").attr("id").replace("template-", "");
+    deleteTemplate(tfid);
+});

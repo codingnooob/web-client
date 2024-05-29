@@ -208,6 +208,242 @@ async function confirmRename() {
 
 
 
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+// NEW TEMPLATE
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+let newTemplateThumbnailBlob;
+let newTemplateThumbnailBlobURL;
+
+/**
+ * Prepares the create doc template panel OR shows a popup that says it's only for active docs if we're coming from dropdown. 
+ * @param {('activeDocPanel'|'dropdown-doc')} from 
+ */
+async function prepareSaveAsTemplatePanel(from) {
+
+    if (from === "dropdown-doc") {
+        var dropdownDocID = $("#dropdown-doc").attr("did");
+        if (dropdownDocID !== activeDocID) {
+            createPopup("To save this document as a template, you'll first need to open it in the editor. This is so that Cryptee can use its contents for the template and optimize it for quick retrieval on your device.");
+            return;
+        }
+        hideRightClickDropdowns();
+    }
+
+    $("#saveas-template-preview-image").attr("src", "");
+    $("#saveas-template-preview-image").removeClass("loaded");
+    newTemplateThumbnailBlob = null;
+    URL.revokeObjectURL(newTemplateThumbnailBlobURL);
+
+    togglePanel("panel-saveas-template");
+
+    // 
+    // GENERATE SCREENSHOT
+    // 
+    
+    activityHappened();
+    await promiseToWait(1000);
+
+    let editorWidth = $(".ql-editor").width();
+    
+    // with aspect ratio 4:3
+    let targetHeight = editorWidth * (4 / 3);
+
+    let canvas = await html2canvas($(".ql-editor")[0], {
+        "allowTaint" : false,
+        "height" : targetHeight,
+        "width"  : editorWidth, 
+        "scale"  : 0.5
+    });
+
+    $("#saveas-template-preview-image").addClass("loaded");
+
+    activityHappened();
+    await promiseToWait(260);
+
+    newTemplateThumbnailBlob = await canvasToBlob(canvas, 0.65, "image/webp");
+    newTemplateThumbnailBlobURL = URL.createObjectURL(newTemplateThumbnailBlob);
+
+    $("#saveas-template-preview-image").attr("src", newTemplateThumbnailBlobURL);
+
+}
+
+
+async function confirmSaveAsTemplate() {
+    
+
+    $("#confirmSaveAsTemplateButton").addClass("loading");
+
+    // 
+    // ENCRYPT TITLE 
+    // 
+
+    let templateID = newUUID();
+    let templateFileID = "dt-" + templateID + "-v4";
+    let templateThumbnailID = "dtt-" + templateID + "-webp-v4";
+    
+    let plaintextTemplateTitle = $("#new-template-input").val().trim();
+
+    if (!plaintextTemplateTitle) {
+        $("#new-template-input").trigger("focus");
+        handleError("[SAVE AS TEMPLATE] Can't save as template without an id", error);
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return;
+    }
+
+    breadcrumb("[SAVE AS TEMPLATE] Encrypting title...");
+    activityHappened();
+
+    var encryptedTitle;
+    var encryptedStringifiedTitle;
+
+    try {
+        encryptedTitle = await encrypt(JSON.stringify(plaintextTemplateTitle), [theKey]);
+        encryptedStringifiedTitle = JSON.stringify(encryptedTitle);
+    } catch (error) {
+        handleError("[SAVE AS TEMPLATE] Can't save as template, failed due to encryption error", error);
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    if (!encryptedStringifiedTitle) {
+        handleError("[SAVE AS TEMPLATE] Failed to save as template due to title encryption error.", {fid : fid});
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    breadcrumb("[SAVE AS TEMPLATE] Encrypted title.");
+    activityHappened();
+
+    //
+    // ENCRYPT TEMPLATE ITSELF
+    //
+
+    let plaintextContents = quill.getContents();
+
+    if (isEmpty(plaintextContents)) {
+        handleError("[SAVE AS TEMPLATE] Can't save a template without contents.", { did : activeDocID, templateFileID : templateFileID });
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    plaintextContents = addDocumentMetadataToDelta(plaintextContents);
+
+    let templateUpload;
+    try {
+        templateUpload = await encryptAndUploadDocument(templateFileID, plaintextContents, true);
+    } catch (error) {
+        handleError("[SAVE AS TEMPLATE] Failed to upload encrypted template", { did : activeDocID, templateFileID : templateFileID });
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    if (isEmpty(templateUpload)) {
+        handleError("[SAVE AS TEMPLATE] Failed to upload encrypted template", { did : activeDocID, templateFileID : templateFileID });
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    let templateGen, templateSize, templateToken;
+    templateGen = parseInt(templateUpload.generation);
+    templateSize = parseInt(templateUpload.size);
+    templateToken = templateUpload.token;
+
+    // 
+    // ENCRYPT TEMPLATE THUMBNAIL 
+    //
+
+    breadcrumb("[SAVE AS TEMPLATE] Encrypting thumbnail...");
+
+    var encryptedThumbnail; 
+    
+    try {
+        encryptedThumbnail = await streamingEncrypt(newTemplateThumbnailBlob, [theKey]);
+    } catch (error) {
+        handleError("[SAVE AS TEMPLATE] Couldn't encrypt thumbnail", error);
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    breadcrumb("[SAVE AS TEMPLATE] Encrypted thumbnail!");
+
+    activityHappened();
+
+    breadcrumb('[SAVE AS TEMPLATE] Uploading thumbnail...');
+
+    // 
+    // UPLOAD THUMBNAIL
+    // 
+
+    let templateThumbnailUpload;
+    let templateThumbnailUploadToken;
+    try {
+        templateThumbnailUpload = await uploadFile(encryptedThumbnail, templateThumbnailID + ".crypteefile");
+        if (typeof templateThumbnailUpload === "string") { return err(templateThumbnailUpload); }
+        templateThumbnailUploadToken = templateThumbnailUpload.token;
+    } catch (error) {
+        handleError("[SAVE AS TEMPLATE] Failed to upload encrypted template thumbnail", error);
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    if (!templateThumbnailUploadToken) {
+        handleError("[SAVE AS TEMPLATE] Failed to upload encrypted template thumbnail");
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    breadcrumb('[SAVE AS TEMPLATE] Uploaded thumbnail.');
+
+    breadcrumb('[SAVE AS TEMPLATE] Saving template meta...');
+    let response; 
+
+    try {
+        response = await api("docs-template", null, {
+            tfid        : templateFileID,
+            ttid        : templateThumbnailID,
+            title       : encryptedStringifiedTitle,
+            generation  : templateGen,
+            size        : templateSize,
+            fromdid     : activeDocID,
+            ttoken      : templateToken,
+            tttoken     : templateThumbnailUploadToken,
+        });
+    } catch (error) {
+        handleError("[SAVE AS TEMPLATE] Failed to save template meta", error);
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+
+    if (!response || response.status !== 200) {
+        handleError("[SAVE AS TEMPLATE] Failed to save template meta");
+        createPopup("<b>Failed to create template!</b> Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#confirmSaveAsTemplateButton").removeClass("loading");
+        return false;
+    }
+    
+    breadcrumb('[SAVE AS TEMPLATE] Saved template meta.');
+
+    await syncTemplates();
+
+    $("#confirmSaveAsTemplateButton").removeClass("loading");
+    hidePanels();
+
+    return true;
+}
+
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 //	NEW FOLDER
@@ -510,7 +746,7 @@ async function showCopyDocPanel(did) {
 
     var targetFID = activeFolderID || "f-uncat";
     var targetFolderName = await getFolderNameFromCatalog(targetFID);
-    $("#copy-doc-target-folder").text(targetFolderName);
+    $("#copy-doc-target-folder").attr("name", targetFolderName);
 
     $("#panel-copy-doc").attr("did", did);
     $("#copy-doc-input").val(placeholderName);
@@ -642,13 +878,6 @@ async function downloadAndDecryptTheEntireCatalog(allDocs) {
 
     return true;
 }
-
-
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-//	GHOSTERS
-////////////////////////////////////////////////
-////////////////////////////////////////////////
 
 
 
@@ -945,40 +1174,6 @@ function unlockEditor() {
     }
     $("body").removeClass("locked-doc");
     $("#lockEditsButton").removeClass("on");
-}
-
-
-
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-//	PAPER MODE META
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-
-/**
- * Saves document's paper size & orientation to catalog and server. 
- * This is not a super duper critical thing, since user can always re-enable it while viewing the doc. 
- * It's more of a convenience thing. Since enabling paper mode adds a bunch of preview-classes, it changes the document's generation,
- * thus updates the document, and forces all other devices to sync these pieces of meta even for offline docs 
- * @param {String} did Document ID
- * @param {('a4'|'a3'|'usletter'|'uslegal')} paperStock The paper stock size (i.e. A4, A3, US Letter or US Legal) 
- * @param {('portrait'|'landscape')} orientation The paper orientation (portrait or landscape)
- * @returns 
- */
-async function saveDocumentPaperSizeAndOrientation(did, paperStock, orientation) {
-    breadcrumb('[PAPER] Saving Document Paper Size & Orientation in Catalog & DB');
-    
-    try {
-        await setDocMetaInCatalog(did, { paper : paperStock, orientation : orientation });
-        await setDocMeta(did, { paper : paperStock, orientation : orientation });    
-    } catch (error) {
-        handleError("[PAPER] Failed to save Paper Size & Orientation", error);    
-    }
-
-    breadcrumb('[PAPER] Saved Document Paper Size & Orientation in Catalog & DB');
-
-
-    return true;
 }
 
 
@@ -1633,9 +1828,50 @@ async function confirmDeletingSelectedDocs() {
 }
 
 
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+// DELETE TEMPLATE
+////////////////////////////////////////////////
+////////////////////////////////////////////////
 
+/**
+ * Deletes template from server and catalog
+ * @param {String} tfid template file id
+ */
+async function deleteTemplate(tfid) {
+    
+    if (!tfid.startsWith("dt-")) { 
+        breadcrumb('[DELETE TEMPLATE] User tried deleting cryptee template...');
+        return; 
+    }
 
+    $("#template-" + tfid).find("button").addClass("loading");
 
+    breadcrumb('[DELETE TEMPLATE] User clicked to delete template :' + tfid);
+    breadcrumb('[DELETE TEMPLATE] Deleting template from server :' + tfid);
+
+    let response;
+    try { 
+        response = await api("docs-deletetemplate", { tfid : tfid }, null, "DELETE", 120); 
+    } catch (e) {
+        console.log(e);
+    }
+
+    if (!response) {
+        createPopup("failed to delete template. Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
+        $("#template-" + tfid).find("button").removeClass("loading");
+        return;
+    }
+
+    breadcrumb('[DELETE TEMPLATE] Deleted template from server :' + tfid);
+
+    try { await deleteTemplatesFromCatalog([tfid]); } catch (e) {}
+
+    breadcrumb('[DELETE TEMPLATE] Deleted template from catalog :' + tfid);
+
+    syncTemplates();
+
+}
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -3332,13 +3568,29 @@ async function summonGhostFolder(hash) {
      */
     var documentFont = $(".ql-editor").attr("font") || defaultFont;
     if (isItForNewDoc) { documentFont = defaultFont; }
+
+    var documentPaperStock = $("body").attr("paper-stock");
+    var documentPaperOrientation = $("body").attr("paper-orientation");
     
-    plaintextContents.metadata = {
-        
-        "documentFont" : documentFont,
-        
-    };
+    plaintextContents.metadata = plaintextContents.metadata || {};
+    plaintextContents.metadata.documentFont = documentFont;
     
+    if (!isItForNewDoc) {
+        
+        if (documentPaperStock) {
+            plaintextContents.metadata.documentPaperStock = documentPaperStock; 
+        } else {
+            delete plaintextContents.metadata.documentPaperStock;
+        }
+        
+        if (documentPaperOrientation) { 
+            plaintextContents.metadata.documentPaperOrientation = documentPaperOrientation; 
+        } else {
+            delete plaintextContents.metadata.documentPaperOrientation;
+        }
+
+    }
+
     breadcrumb('[DOC META] Saved document metadata');
     return plaintextContents;
 
@@ -3349,7 +3601,7 @@ async function summonGhostFolder(hash) {
  * @param {Object} plaintextContents 
  * @returns {Object} plaintextContents
  */
-function loadDocumentMetadataFromDelta(plaintextContents) {
+function loadDocumentMetadataFromDelta(plaintextContents, doc) {
     
     plaintextContents = plaintextContents || {};
     
@@ -3366,7 +3618,17 @@ function loadDocumentMetadataFromDelta(plaintextContents) {
     // Load documentFont (a.k.a. device default font at the time of document creation / save)
     $(".ql-editor").attr("font", plaintextContents.metadata.documentFont);
     
-    // if quill throws a tantrum, start deleting these. 
+    // Load document paper stock
+    var documentPaperStock = plaintextContents.metadata.documentPaperStock || doc.paper;
+    var documentPaperOrientation = plaintextContents.metadata.documentPaperOrientation || doc.orientation;
+
+    if (documentPaperStock) {
+        enablePaperMode(documentPaperStock, documentPaperOrientation, true);
+    } else {
+        disablePaperMode(true);
+    }
+
+    // if quill throws a tantrum some day in the future, start deleting these. 
     // delete plaintextContents.metadata.documentFont;
     
     breadcrumb('[DOC META] Loaded document metadata');
@@ -3482,7 +3744,6 @@ async function getFilesizeSaveItAndUpdateUI(did, alsoRefreshDOM) {
     var docInDom = $(`.doc[did="${did}"]`).first();
     
     var sizeFromDOM = docInDom.attr("size") || "";
-    console.log(sizeFromDOM);
     $(`#dropdown-doc[did="${did}"]`).attr("size", sizeFromDOM);
     $(`#dropdown-doc[did="${did}"] > .filesize`).attr("size", sizeFromDOM);
 

@@ -443,6 +443,7 @@ key('command+enter, ctrl+enter', function () {
 key('esc', function () {
     hidePanels();
     hideFloaters();
+    hideActiveView();
     clearSelections();
     hideRightClickDropdowns();
 });

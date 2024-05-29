@@ -193,15 +193,15 @@ function hideAllPopups() {
 
 $('.popup.interactive > p > input, .popup.interactive > p > textarea').on('change keyup paste', function(event) {
     var popup = $(this).parents(".popup");
-    var somethingChanged = false;
+    var changeHappened = false;
     
     popup.find("input, textarea").each(function(){
         var oldValue = ($(this).attr("placeholder").trim() || "").toUpperCase();
         var newValue = ($(this).val().trim()).toUpperCase();
-        if (!somethingChanged && newValue && newValue !== oldValue) { somethingChanged = true; }
+        if (!changeHappened && newValue && newValue !== oldValue) { changeHappened = true; }
     });
 
-    popup.toggleClass("changed", somethingChanged);
+    popup.toggleClass("changed", changeHappened);
 }); 
 
 $('.popup > p > input, .popup > p > textarea').on('keyup', function(event) {
@@ -225,16 +225,18 @@ $('.popup > p > input, .popup > p > textarea').on('keyup', function(event) {
  */
 function showModal(modalID) {
     
-    if (modalID.length > 1) {
-        var modal = $("#" + modalID);
-        modal.removeClass("hidden");
-        setTimeout(function () {
-            modal.addClass("show");
-            modal.find("input:first-child").trigger("focus");
-        }, 10);
-    }
+    if (modalID.length < 1) { return; }
+
+    var modal = $("#" + modalID);
+    modal.removeClass("hidden");
+    setTimeout(function () {
+        modal.addClass("show");
+        modal.find("input:first-child").trigger("focus");
+    }, 10);
+    
 
     if (typeof hidePanels === 'function') { hidePanels(); }
+    if (typeof hideViews === 'function') { hideViews(); }
 
     hideTips();
 
@@ -675,9 +677,44 @@ async function goToUpgrade() {
     if (location.pathname.startsWith("/docs")) {
         $("#upgrade").addClass("loading");
         $("#upgrade").html("<span>saving your document...</span>");
-        if (remainingStorage > 0) { await saveDoc(); } // if we don't have any storage space, we can't save anyway.
+        if (remainingStorage > 0) { 
+            try { await saveDoc(); } catch (e) {}
+        } // if we don't have any storage space, we can't save anyway.
         location.href = "/plans";
     } else {
         location.href = "/plans";
     }
+}
+
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+// VIEWS (I.E. TEMPLATE GALLERY)
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+/**
+ * Show view with the view ID (i.e. template gallery view)
+ * @param {String} viewID (i.e. "view-template-gallery")
+ */
+function showView(viewID) {
+    viewID = viewID || ""
+
+    if (viewID.length < 1) { return; }
+    
+    var view = $("#" + viewID);
+
+    view.removeClass("hidden");
+    setTimeout(function () { view.addClass("show"); }, 10);
+
+}
+
+function hideActiveView() {
+    
+    var view = $(".view.show");
+    view.removeClass("show"); 
+
+    var animationDuration = parseFloat(view.css("transition-duration")) * 1000;
+    setTimeout(function () { view.addClass("hidden"); }, (animationDuration + 10));
+
 }

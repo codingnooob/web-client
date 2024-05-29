@@ -40,13 +40,12 @@ var catalog                 = new Dexie("catalog");
 var offlineStorage          = new Dexie("offlineStorage");
 // this is for backwards compatibility to read the old table 
 
-catalog.version(1).stores({
+catalog.version(2).stores({
     docs: 'docid, title, decryptedTitle, tags, decryptedTags, generation, fid',
     offline: 'docid',
-    folders:'folderid, parent, title, decryptedTitle'
+    folders: 'folderid, parent, title, decryptedTitle',
+    templates: 'tfid, ttid, title, deltas, generation'
 });
-
-
 
 
 
@@ -102,6 +101,29 @@ async function getFolderFromCatalog(fid) {
 
     return folder;
 
+}
+
+/**
+ * Gets the template from catalog
+ * @param {string} tfid template file id 
+ */
+async function getTemplateFromCatalog(tfid) {
+    if (!tfid) {
+        handleError("[CATALOG] Can't get template without an ID");
+        return "";
+    }
+
+    var template;
+
+    try {
+        template = await catalog.templates.get(tfid);
+    } catch (error) {
+        error.tfid = tfid;
+        handleError("[CATALOG] Couldn' get template from catalog", error);
+        return false;
+    }
+
+    return template;
 }
 
 
@@ -480,6 +502,27 @@ async function getDocGenFromCatalog (did) {
 
 }
 
+/**
+ * Gets all templates from catalog as an array
+ * @returns {Promise<Array>} templates
+ */
+async function getAllTemplatesFromCatalog() {
+
+    var templates = {};
+    var templatesArray = [];
+
+    try {
+        templatesArray = await catalog.templates.toArray();
+    } catch (error) {
+        handleError("[CATALOG] Couldn't get all templates from catalog", error);
+        return false;
+    }
+
+    templatesArray.forEach(template => { templates[template.tfid] = template; });
+
+    return templates;
+
+}
 
 
 ////////////////////////////////////////////////
@@ -613,7 +656,31 @@ async function newFolderInCatalog(folder) {
 
 }
 
+/**
+ * Creates a new template in catalog. 
+ * @param {Object} template 
+ * @returns 
+ */
+async function newTemplateInCatalog(template) {
 
+    if (isEmpty(template)) {
+        handleError("[CATALOG] Can't create template. No data");
+        return false;
+    }
+
+    breadcrumb('[CATALOG] Creating template in catalog');
+
+    try {
+        await catalog.templates.put(template);
+    } catch (error) {
+        error.tfid = template.tfid;
+        handleError("[CATALOG] couldn't create template in catalog", error);
+        return false;
+    }
+
+    return true; 
+
+}
 
 
 /**
@@ -829,8 +896,36 @@ async function deleteFoldersFromCatalog(arrayOfFIDsToDelete) {
 
 }
 
+/**
+ * Bulk delete templates from catalog using their IDs.
+ * @param {Array} templateFileIDs 
+ * @returns 
+ */
+async function deleteTemplatesFromCatalog(templateFileIDs) { 
 
+    if (!templateFileIDs.length) {
+        // No templates to delete, skipping.
+        return false;
+    }
 
+    breadcrumb('[CATALOG] Deleting templates from catalog');
+
+    try {
+        await catalog.templates.bulkDelete(templateFileIDs);
+    } catch (error) { 
+        handleCatalogError("[CATALOG] Failed to delete template from catalog", error);
+    }
+
+    breadcrumb('[CATALOG] Deleted templates from catalog');
+
+    // now let's clear it all from DOM
+    templateFileIDs.forEach(tfid => {
+        $(`.template[id='template-${tfid}']`).remove();
+    });
+
+    return true;
+
+}
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////

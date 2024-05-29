@@ -193,6 +193,26 @@ async function getTitlesAndTags() {
 
 }
 
+async function getTemplates() {
+
+    breadcrumb("[TEMPLATES] Getting templates");
+
+    var templatesResponse;
+
+    try {
+        templatesResponse = await api("docs-templates");
+    } catch (error) {
+        handleError("Couldn't get templates due to error", error);
+    }
+
+    if (!templatesResponse) {
+        return false;
+    }
+
+    return templatesResponse.data;
+
+}
+
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 //	SETTERS

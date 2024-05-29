@@ -58,6 +58,11 @@ var theUser, theUserJSON, theUserID, theUsername, theEmail, emailVerified, theUs
 var usedStorage, allowedStorage, remainingStorage;
 var paddleCancelURL, paddleUpdateURL;
 
+/**
+ * This tells us if the user is a paid/gifted user or a free plan user. Paid = true, Free = false
+ */
+var isPaidUser;
+
 // we use sessionUser to bypass the initial auth call, and instead delay / wait for auth at getIdToken() calls. 
 // this allows us to improve startup UX by 500 - 1000ms 
 // and gives a better overall experience. 
@@ -785,7 +790,7 @@ function updateUserInLS() {
         
         updateRemainingStorage(remainingStorage);
         
-        if (theUserPlan && theUserPlan !== "free") {
+        if (theUserPlan && theUserPlan !== "free" && theUserPlan !== "gift") { 
             localStorage.setItem("plan", theUserPlan); 
         } else {
             localStorage.removeItem("plan");
@@ -905,6 +910,14 @@ function plansUpdated() {
 
         setSentryTag("plan", "free");
         setSentryTag("paid", false);
+    }
+
+    if (theUserPlan && theUserPlan !== "free") {
+        $("body").attr("plan", theUserPlan);
+        isPaidUser = true;
+    } else {
+        $("body").removeAttr("plan");
+        isPaidUser = false;
     }
 }
 

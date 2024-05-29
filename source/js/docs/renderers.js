@@ -555,8 +555,46 @@ function renderUpload(uploadID, name, loaded, total, status) {
 }
 
 
+/**
+ * Prepares a template for the template gallery
+ * @param {Object} template 
+ * @param {'user'|'cryptee'} by
+ * @returns {String} templateGalleryHTML
+ */
+function renderTemplateForGallery(template, by) {
+    
+    let templateImageURL, templateBy, id, name, generation;
+    
+    if (by === "cryptee") {
+        id = template.file;
+        name = template.name;
+        templateBy = template.by || "the cryptee team";
+        templateImageURL = apiROOT + "/api/static/cryptee-docs-templates/" + template.file + ".webp";
+        generation = 0;
+    } else {
+        id = template.tfid;
+        name = template.title;
+        templateBy = "you";
+        templateImageURL = URL.createObjectURL(template.thumb);
+        generation = template.generation;
+    }
 
+    let templateElement = escapeTemplateHTML`<div class="template" id="template-${id}" gen="${generation}">
+        <img src="${templateImageURL}">
+        <p>
+            <span class="name">${name}</span><br>
+            <span class="gray by">by ${templateBy}</span>
+        </p>
+        <label><input type="checkbox" class="preview-and-back"></label>
+        <button class="button-use-template">use template</button>
+        <button class="button-delete-template"><i class="ri-delete-bin-2-fill"></i></button>
+        
+        <button class="wipe button-cancel-delete-template">no, keep it</button>
+        <button class="wipe red button-confirm-delete-template">yes, delete it</button>
+    </div>`;
 
+    return templateElement
+}
 
 
 

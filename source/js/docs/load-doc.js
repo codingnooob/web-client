@@ -154,9 +154,18 @@ async function loadDoc(doc) {
         return false;
     }
 
+    
     await loadedDocPrepareEditor(doc, did, docContents, connection, reSaveOfflineDoc);
-
-    loadingDoc = false;
+    
+    var documentsPaperStock = docContents.metadata.documentPaperStock || doc.paper || false;
+    // this is because if doc is using paper mode, when we enable paper mode, we'll make a bunch of changes to the doc
+    // using calculatePaperOverflow, which affects the DOM, then fires off a 900ms  timer, and it will then trigger quill's text-change.
+    // text-change checks for loadingDoc, and doesn't unnecessarily try to save. 
+    // BUT. since the calculatePaperOverflow uses a 900ms  timer, it will fire off "calculatePaperOverflow" and thus "text-change"
+    // 900ms after we set loadingDoc to false here. = resulting in a re-save right after the doc opens. 
+    // to prevent this, for paper mode documents, we consider the doc "loaded" after the calculatePaperOverflow fires for the last time, 900ms later.
+    // this is at the end of : "enablePaperMode", right after the timeout.
+    if (!documentsPaperStock || documentsPaperStock === "continuous") { loadingDoc = false; }
 }
 
 
@@ -167,11 +176,13 @@ async function loadDoc(doc) {
  * @param {object} docContents quill deltas
  * @param {boolean} connection 
  * @param {boolean} [forceSaveOfflineDoc] 
+ * @param {boolean} [forNewDoc] 
  */
-async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSaveOfflineDoc) {
+async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSaveOfflineDoc, forNewDoc) {
     
     forceSaveOfflineDoc = forceSaveOfflineDoc || false;
-    
+    forNewDoc = forNewDoc || false;
+
     breadcrumb('[LOAD DOC] Preparing editor for ' + did);
 
     // set activeDocID;
@@ -190,14 +201,14 @@ async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSa
     // clear editor to avoid a large diff compute time
     // https://github.com/quilljs/quill/issues/1537
     // https://github.com/cryptee/web-client/issues/102
-    quill.setContents("");
+    quill.setContents("", "silent");
     
     // Load document metadata from the delta
-    docContents = loadDocumentMetadataFromDelta(docContents);
+    docContents = loadDocumentMetadataFromDelta(docContents, doc);
 
     // add delta into the editor. 
     try {
-        quill.setContents(docContents);
+        quill.setContents(docContents, "silent");
     } catch (error) {
         handleError("[LOAD DOC] Quill failed to set contents.", {did:activeDocID});
         createPopup(`Failed to load your document <b>${docName(doc)}</b>. Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.`, "error");
@@ -218,10 +229,6 @@ async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSa
     // quit viewing mode and focus mode
     disableViewingMode();
     disableFocusMode();
-
-    if (doc.paper) {
-        enablePaperMode(doc.paper, doc.orientation, true);
-    }
     
     // quill.setContents will trigger somethingChanged() for the doc we've just opened. 
     // So we'll have to set that flag back
@@ -251,42 +258,51 @@ async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSa
     // set editor progress to 100%
     stopRightProgress("green");
     if (!connection) { stopRightProgress("blue"); }
-
-    // show document (remove no-doc or loading from body / editor)
-    updateEditorState(); // blank = show doc
-
     
+    // show document (remove no-doc or loading from body / editor)
+    updateEditorState(null, true); // blank = show doc
+
     // refresh dom to reflect active doc in recents/folder etc
     await refreshDOM();
 
-
-
+    if (forNewDoc) {
+        $(".button-use-template").removeClass("loading wipe green");
+        hideActiveView();
+        hidePanels();    
+    }
+        
     //
     //
     // DISPLAY OTHER INFORMATION
     //
     //
 
-
-
     // set document name in the browser tab
     document.title = "Cryptee | " + docName(doc);
 
     // prep info panel with doc name, folder, size, word count etc
-    breadcrumb('[LOAD DOC] Preparing "DOCINFO" Panel for ' + activeDocID);
-    prepareActiveDocumentInfoPanel(activeDocID, doc, docContents);
+    try {
+        breadcrumb('[LOAD DOC] Preparing "DOCINFO" Panel for ' + activeDocID);
+        prepareActiveDocumentInfoPanel(activeDocID, doc, docContents);
+    } catch (e) {}
 
-    breadcrumb('[LOAD DOC] Preparing "DOCFILE" Panel for ' + activeDocID);
-    prepareActiveDocumentFilePanel(activeDocID, doc);
+    try {
+        breadcrumb('[LOAD DOC] Preparing "DOCFILE" Panel for ' + activeDocID);
+        prepareActiveDocumentFilePanel(activeDocID, doc);
+    } catch (e) {}
 
-    breadcrumb('[LOAD DOC] Preparing "DOCTOOLS" Panel for ' + activeDocID);
-    prepareActiveDocumentToolsPanel(activeDocID, doc);
+    try {
+        breadcrumb('[LOAD DOC] Preparing "DOCTOOLS" Panel for ' + activeDocID);
+        prepareActiveDocumentToolsPanel(activeDocID, doc);
+    } catch (e) {}
 
-    breadcrumb('[LOAD DOC] Generating table of contents for ' + activeDocID);
-    generateTableOfContents();
+    try {
+        breadcrumb('[LOAD DOC] Generating table of contents for ' + activeDocID);
+        generateTableOfContents();
+    } catch (e) {}
 
     breadcrumb('[LOAD DOC] Loaded ' + activeDocID);
-
+    
 }
 
 
@@ -438,7 +454,7 @@ async function closeActiveDoc() {
     quill.root.spellcheck = false;
     
     // clear contents
-    quill.setContents("");
+    quill.setContents("", "silent");
 
     // clear editor history
     quill.history.clear();

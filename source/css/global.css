@@ -378,6 +378,24 @@ button.loading img {
     animation: blinkOpacity 1s linear infinite;
 }
 
+button.loading.wipe {
+    background: linear-gradient(90deg, var(--cryptee-1), color-mix(in srgb, #fff 20%, var(--cryptee-2)), var(--cryptee-1));
+    animation: loadingBGWipeHorizontal 0.5s linear infinite;
+    background-size: 200% 200%;
+}
+
+button.loading.wipe.green {
+    background: linear-gradient(90deg, #107032, color-mix(in srgb, #fff 20%, var(--cryptee-green)), #107032);
+    animation: loadingBGWipeHorizontal 0.5s linear infinite;
+    background-size: 200% 200%;
+}
+
+button.loading.wipe.red {
+    background: linear-gradient(90deg, #7f0101, color-mix(in srgb, #fff 20%, var(--cryptee-red)), #7f0101);
+    animation: loadingBGWipeHorizontal 0.5s linear infinite;
+    background-size: 200% 200%;
+}
+
 /* -----------------------------
 -------------------------------- 
  
@@ -1296,6 +1314,127 @@ MODALS
     animation-play-state: running;
 }
 
+
+
+/* -----------------------------
+-------------------------------- 
+ 
+VIEWS 
+ 
+--------------------------------
+----------------------------- */
+
+
+.view {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    margin: auto;
+    max-width: 40rem;
+    max-height: calc(100% - 16rem);
+
+    z-index: 10;
+
+    box-shadow: 0 1rem 2rem rgba(0,0,0,0.2);
+    background-color: var(--cryptee-0);
+    border-radius: 1rem;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr 5.5rem;
+    grid-template-rows: 5.5rem 1fr;
+
+    opacity: 0;
+    transform: translate3d(0,1rem,0);
+    
+    transition-duration: 0.5s;
+    transition-property: opacity, transform;
+    transition-timing-function: var(--cryptee-cb);
+
+    pointer-events: none;
+    user-select: none;
+    overflow: hidden;
+}
+
+.view .close {
+    margin: 0;
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    height: 1.5rem;
+}
+
+.view .close img {
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.view h3 {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    color: var(--cryptee-4);
+    line-height: 2rem;
+    margin-top: 0rem;
+    max-width: calc(100% - 8rem);
+}
+
+.view .corner-action {
+    grid-column: 2/3;
+    grid-row: 1/2;
+    margin-left: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.view.show {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate3d(0,0,0);
+}
+
+.view .view-content {
+    grid-column: 1/-1;
+    grid-row: 2/3;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    padding: 0 2rem 2rem 2rem;
+}
+
+.view.hidden { display: none !important;}
+
+.view-upgrade {
+    max-width: 22rem;
+    max-height: 37.5rem;
+    background-color: #000;
+    grid-template-rows: 5.5rem 1fr;
+
+    background-image: url(../imgs/checkout/coffee.webp);
+    background-size: 100% auto;
+    background-position: bottom;
+    background-repeat: no-repeat;
+}
+
+.view-upgrade .view-content {
+    padding: 0rem 2rem 2rem 2rem;
+}
+
+.view-upgrade .view-content p {
+    margin-top: 0;
+}
+
+.view-upgrade button:last-child {
+    background-color: #1aa84c;
+    color: var(--cryptee-4);
+    height: 3rem;
+    width: 10rem;
+    margin-top: 2rem;
+    padding: 0 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
 /* -----------------------------
 -------------------------------- 
  
@@ -1818,10 +1957,19 @@ ANIMATIONS
 	100% { background-position: 0% 0%; }
 }
 
+@keyframes loadingBGWipeVerticalScan {
+    0% { background-position: 0% 200%; }
+	50% { background-position: 0% 0%; }
+	100% { background-position: 0% 200%; }
+}
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-
+@keyframes keyClick {
+    0% { transform: scale(1);     }
+    50% { transform: scale(0.85); }
+    100% { transform: scale(1);   }
+}
 
 
 
@@ -1849,6 +1997,7 @@ MEDIA QUERIES
 
 @media (max-width : 544px) {
     .hidden-below-tablet { display: none !important; }
+    .view-upgrade { max-height: 33rem; }
     .popup.corner { right: 0; }
 }
 
@@ -1945,6 +2094,10 @@ ENABLE HOVERS
     .popup.interactive p.message button.red:hover { background-color: var(--cryptee-red); }
     .popup.interactive p.message button.green:hover { background-color: var(--cryptee-green); }
     .popup.interactive p.message button.yellow:hover { background-color: var(--cryptee-yellow); }
+
+    .view-upgrade button:last-child:hover {
+        background-color: var(--cryptee-green);
+    }
 }
 
 

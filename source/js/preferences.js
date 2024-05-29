@@ -134,7 +134,9 @@ try {
 ////////////////////////////////////////////////
 
 var defaultAppPreferences = {
-    "docs" : {},
+    "docs" : {
+        "auto-offline-new-docs"       : "offline-first",
+    },
     "photos" : {
         "high-res-thumbnails"         : "auto",
         "video-thumbnails-type"       : "animated",

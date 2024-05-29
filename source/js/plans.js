@@ -110,7 +110,7 @@ $('.plan').on('click', "button", function (event) {
     var period = $("#period").attr("period");
     var price = $(this).attr(period);
 
-    if (theUserPlan && theUserPlan !== "free") {
+    if (theUserPlan && theUserPlan !== "free" && theUserPlan !== "gift") {
         switchConfirm(plan, period);
     } else {
         chosenPlan(plan, period, price);

@@ -814,8 +814,9 @@ function fortifyHTML(webHTML) {
         table.setAttribute("rows", noRows);
         table.setAttribute('tableid', tableid);
         table.setAttribute('columns', noColumns);
+        table.setAttribute('tablemeta', 'none');
         table.setAttribute("style", `--columns:${noColumns}; --rows:${noRows};`);
-        table.insertAdjacentHTML('beforebegin', `<crypteetabledata columns="${noColumns}" rows="${noRows}" tableid="${tableid}" contenteditable="false"><br></crypteetabledata>`);
+        table.insertAdjacentHTML('beforebegin', `<crypteetabledata columns="${noColumns}" rows="${noRows}" tableid="${tableid}" tablemeta='none' contenteditable="false"><br></crypteetabledata>`);
 
         // remove all children of the table
         Array.from(table.children).forEach(children => { children.remove(); });
@@ -982,7 +983,7 @@ function purifyHTML(rawHTML) {
     breadcrumb('[PURIFY HTML] Purifying HTML');
     var allowedHTMLTags = ["A", "B", "BLOCKQUOTE", "BR", "CODE", "DEL", "DIV", "EM", "H1", "H2", "H3", "H4", "H5", "H6", "HR", "I", "IMG", "LI", "META", "OL", "P", "PRE", "Q", "S", "SPAN", "STRIKE", "STRONG", "SUB", "SUP", "TABLE", "TBODY", "TFOOT", "THEAD", "TD", "TH", "TR", "U", "UL"];
     var allowedCustomTags = ["CRYPTEETABLEDATA", "CRYPTEETABLE", "CRYPTEETABLECELL", "CRYPTEEFILE", "CRYPTEEFOLDER", "CRYPTEETAG", "CRYPTEEPAGEBREAK"];
-    var allowedCrypteeAttributes = ["tableid", "rows", "columns", "fid", "did", "filetitle", "filename", "extsrc", "extalt", "type", "hash", "checked", "data-checked"];
+    var allowedCrypteeAttributes = ["tableid", "tablemeta", "rows", "columns", "fid", "did", "filetitle", "filename", "extsrc", "extalt", "type", "hash", "checked", "data-checked"];
     var cleanHTML = DOMPurify.sanitize(rawHTML, { 
         ALLOWED_TAGS: allowedHTMLTags, 
         ADD_TAGS: allowedCustomTags ,

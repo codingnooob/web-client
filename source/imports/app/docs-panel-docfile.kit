@@ -11,7 +11,7 @@
     </button>
 
     <button class="white disabled-for-reserved disabled-while-saving" onclick="showCopyDocPanel(activeDocID);" id="copyActiveDocButton">
-        <i class="ri-file-copy-2-fill"></i>
+        <i class="ri-file-copy-fill"></i>
         <span>make a copy</span>
     </button>
 
@@ -20,10 +20,18 @@
         <span>export / print</span>
     </button>
 
+    <button class="white disabled-while-saving disabled-in-offline-mode" onclick="prepareSaveAsTemplatePanel('activeDocPanel');" id="createTemplateFromActiveDocButton">
+        <i class="ri-file-copy-2-fill"></i>
+        <span>save as template</span>
+        <span class="green tag">new</span>
+    </button>
+
     <button class="white disabled-in-offline-mode hide-for-offline-folder-or-doc" onclick="makeDocumentAvailableOffline(activeDocID);" id="makeActiveDocOfflineButton">
         <i class="ri-download-cloud-fill"></i>
         <span>make available offline</span>
     </button>
+
+    <hr>
 
     <button class="red show-for-offline-folder-or-doc disabled-while-saving" onclick="prepareMakeOnlineModal('activeDoc');" id="makeActiveDocOnlineButton">
         <i class="ri-delete-bin-4-fill"></i>
