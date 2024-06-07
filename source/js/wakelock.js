@@ -17,7 +17,9 @@ function enableWakeLock() {
     if (!noSleep) { return false; }
 
     try {
-        if (document.visibilityState === 'visible') {
+        // WORKAROUND FOR IOS PWA WAKELOCK API BUG.
+        // FOR NOW WE'LL ONLY HAVE WAKELOCK IN PHOTOS, OR DOCS PLAYING VIDEO TAKES OVER SPOTIFY ETC
+        if (document.visibilityState === 'visible' && location.pathname !== "/docs") {
             noSleep.enable();
             wakeLockEnabled = true;
             breadcrumb('[WAKE LOCK] Requested');

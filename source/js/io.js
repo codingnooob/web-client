@@ -236,15 +236,21 @@ function uploadProgress(filename, loaded, total, inBackground) {
     var uploadID = filenameToUploadID(filename);
 
     addUploadVariantToUploader(filename, total);
-    
-    // document is backgrounded mid-save, show uploader now
-    if (uploadID !== activeDocID) { showUploader(); }
-    
+
+    if (location.pathname === "/docs") {
+        // document is backgrounded mid-save, show uploader now
+        if (uploadID !== activeDocID) { showUploader(); }
+    } else {
+        showUploader();
+    }
+
     percentCompleted = ((loaded * 100) / total).toFixed(2).toString();
     $(`.upload[id="${uploadID}"]`).attr("docorfile-progress", percentCompleted);
     updateUploadProgress(filename);
 
-    if (!inBackground) { updateRightProgress(loaded, total, "yellow"); }
+    if (location.pathname === "/docs") {
+        if (!inBackground) { updateRightProgress(loaded, total, "yellow"); }
+    }
 
     activityHappened();
 

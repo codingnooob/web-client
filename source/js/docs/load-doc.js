@@ -234,6 +234,9 @@ async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSa
     // So we'll have to set that flag back
     docChanged(activeDocID, false);
 
+    // this is normally in text-changed, but since we're speeding a few things up, we check again here or else it will display the message in the infobox
+    checkIfDocumentHasRemoteImages();
+    
     // there was an offline doc flag, but document wasn't in offline storage, re-save it there to fix future issues. 
     // ALTERNATIVELY, it's a new doc, and we've loaded the editor, and we want to make sure newly created doc is available offline,
     // until it's meta is saved to server as a failsafe.
