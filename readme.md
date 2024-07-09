@@ -16,11 +16,11 @@ First, let's get a few things out of the way.
 
 &nbsp;
 
-#### Security & Issues
+# Security & Issues
 
 If you find any critical security issues, please reach out to us using `security @ crypt [dot] ee`. 
 
-Otherwise, feel free to throw in your bug reports and issues here on github! The issues section is meme & emoji friendly. Please use fun GIFs. It'll cheer everyone up. We're going through a pandemic ffs, we can all use a good laughter. So issues/bug-reports/feature suggestions with relevant & fun memes and gifs will win some free storage on the house.  
+Otherwise, feel free to throw in your bug reports and issues here on github! The issues section is meme & emoji friendly. Please use fun GIFs. It will cheer everyone up. We have been through a pandemic ffs, we can all use a good laughter. So issues/bug-reports/feature suggestions with relevant & fun memes and gifs will win some free storage on the house.  
 
 Needless to say, this doesn't mean Cryptee isn't a serious product or company, it just means you can relax, smile and take things easy. We're all humans.
 
@@ -34,7 +34,7 @@ Needless to say, this doesn't mean Cryptee isn't a serious product or company, i
 &nbsp;
 
 
-#### Thoughts on frameworks
+# Thoughts on frameworks
 
 Chances are some of you will look at this source code and think *"WTF JQUERY!? CODEKIT!?"* or *"Y U NO ANGULAR!? WHY NOT REACT? NO GRUNT!?"*. That's okay. Take a deep breath, calm down.
 
@@ -42,7 +42,7 @@ When you are a small company, living frugal to ship as quickly yet as reliably a
 
 You don't want to depend on ever-changing massive frameworks, backwards compatibility issues, or [fucking creepy licenses](https://thenextweb.com/dd/2017/09/25/facebook-re-licenses-react-mit-license-developer-backlash/).
 
-So yeah Cryptee uses Codekit and JQuery. ~~zepto ... if we're being specific~~.
+So yeah Cryptee uses Codekit and JQuery syntax. ~~zepto ... if we're being specific, and it's tiny, around ~9kb, to make coding easier~~.
 
 (Did you feel that? All of Silicon Valley just shuddered in disgust.)
 
@@ -55,7 +55,7 @@ So yeah Cryptee uses Codekit and JQuery. ~~zepto ... if we're being specific~~.
 
 &nbsp;
 
-#### Why is Cryptee's backend code not open-source?
+# Why is Cryptee's backend code not open-source?
 
 1. The main reason why Cryptee, and most other privacy-first companies are hesitant about open sourcing their backend is because it risks exposing the tightly integrated abuse-prevention systems. Opening our backend code could quickly lead to all sorts of sign-up abuse, which isn't sustainable for a small company / startup like Cryptee. (financially or technically)
 

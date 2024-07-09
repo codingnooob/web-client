@@ -3192,6 +3192,8 @@ DOCUMENT ACTION BUTTONS
     grid-column: 3 / 4;
     line-height: 2rem;
     height: 2rem;
+    transition: 0.5s transform var(--cryptee-cb) 1s, 0.5s opacity var(--cryptee-cb) 1s;
+    transform: scale(1);
 }
 
 #documentActionButtons i, 
@@ -3254,6 +3256,72 @@ body.bubble #panel-button-docinfo.warning i,
     color : var(--cryptee-yellow) !important;
     opacity: 1 !important;
 }
+
+body:not(.no-doc):not(.offline) #progress:not(.green) ~ #hotkeysButton { 
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none !important;
+}
+
+body.no-doc #upload-cloud { opacity: 0; }
+
+#upload-cloud {
+    width: 1.25rem;
+    height: 1.25rem;
+    grid-row: 2 / 3;
+    grid-column: 3 / 4;
+    margin: auto;
+    transition: 0.5s fill ease, 0.5s transform ease 1s;
+    transform: scale(0);
+    fill : var(--cryptee-green); 
+    transform-origin: center;
+}
+
+#upload-cloud #check { opacity: 1; transform: scale(1); }
+#upload-cloud #arrow { opacity: 0; transform: scale(0); }
+
+#upload-cloud #check,
+#upload-cloud #arrow {
+    transform-origin: center;
+    transition: 0.5s opacity ease, 0.5s transform ease;
+}
+
+body:not(.no-doc) #progress:not(.green) ~ #upload-cloud {
+    fill: #000;
+    opacity: 0.4;
+    transform: scale(1);
+}
+
+body:not(.no-doc) #progress:not(.green) ~ #upload-cloud #arrow {
+    animation: uploadCloudArrow 1s linear infinite;
+    transform: scale(1);
+}
+
+body:not(.no-doc) #progress:not(.green) ~ #upload-cloud #check {
+    transform: scale(0);
+    opacity: 0;
+}
+
+@keyframes uploadCloudArrow {
+    0% {
+        transform: translateY(0.5rem) scale(0.5);
+        opacity: 0;
+    }
+    30% { 
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    70% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-0.5rem) scale(0.5);
+        opacity: 0;
+    }
+}
+
+
 
 /* -----------------------------
 -------------------------------- 
@@ -3639,7 +3707,8 @@ body.locked-doc #desktopToolbar::before {
 /* exporting pdf */
 
 body.exporting-pdf #desktopToolbar,
-body.exporting-pdf #mobileToolbar {
+body.exporting-pdf #mobileToolbar,
+body.exporting-pdf #upload-cloud {
     opacity: 0 !important;
     pointer-events: none !important;
 }
@@ -3728,9 +3797,11 @@ body.focus-mode #helpButton {
 
 body.viewing-doc #documentActionButtons button:not(#panel-button-doctools) i,
 body.viewing-doc #hotkeysButton i,
+body.viewing-doc #upload-cloud,
 body.viewing-doc #helpButton i,
 body.focus-mode #documentActionButtons button:not(#panel-button-doctools) i,
 body.focus-mode #hotkeysButton i,
+body.focus-mode #upload-cloud,
 body.focus-mode #helpButton i { 
     opacity: 0 !important;
 }
@@ -3892,6 +3963,8 @@ body.offline #view-template-gallery  {
     max-height: 40rem;
 }
 
+body.offline #upload-cloud { opacity: 0 !important; }
+
 /* -----------------------------
 -------------------------------- 
  
@@ -3946,11 +4019,11 @@ body.bubble #desktopToolbar {
     grid-column: 1/-1;
     grid-row: 1/3;
 
-    background: linear-gradient(to bottom, #FFF 3rem, rgba(255,255,255,0) 4rem);
+    background: rgba(255,255,255,0.975);
 }
 
 .dm body.bubble #desktopToolbar {
-    background: linear-gradient(to bottom, var(--oled-safe-black) 3rem, rgba(8,8,8,0) 4rem);
+    background: rgba(8,8,8,0.93);
 }
 
 body.bubble[paper-stock] #desktopToolbar { background: var(--cryptee-4) !important; }
@@ -3984,7 +4057,8 @@ body.bubble #hotkeysButton i  {
     opacity: 0.4;
 }
 
-body.bubble #hotkeysButton {
+body.bubble #hotkeysButton,
+body.bubble #upload-cloud {
     z-index: 2;
 }
 

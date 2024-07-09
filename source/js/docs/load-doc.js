@@ -157,6 +157,12 @@ async function loadDoc(doc) {
     
     await loadedDocPrepareEditor(doc, did, docContents, connection, reSaveOfflineDoc);
     
+    if (keyWasChangedButOfflineDocWasNotSynced[did]) {
+        await promiseToWait(1000);
+        somethingChanged();
+        await saveDoc(did);
+    } 
+
     var documentsPaperStock = docContents.metadata.documentPaperStock || doc.paper || false;
     // this is because if doc is using paper mode, when we enable paper mode, we'll make a bunch of changes to the doc
     // using calculatePaperOverflow, which affects the DOM, then fires off a 900ms  timer, and it will then trigger quill's text-change.
@@ -166,6 +172,7 @@ async function loadDoc(doc) {
     // to prevent this, for paper mode documents, we consider the doc "loaded" after the calculatePaperOverflow fires for the last time, 900ms later.
     // this is at the end of : "enablePaperMode", right after the timeout.
     if (!documentsPaperStock || documentsPaperStock === "continuous") { loadingDoc = false; }
+    
 }
 
 
@@ -234,7 +241,7 @@ async function loadedDocPrepareEditor(doc, did, docContents, connection, forceSa
     // So we'll have to set that flag back
     docChanged(activeDocID, false);
 
-    // this is normally in text-changed, but since we're speeding a few things up, we check again here or else it will display the message in the infobox
+    // this is normally in 'text-change', but since we're speeding a few things up, we check again here or else it will display the message in the infobox
     checkIfDocumentHasRemoteImages();
     
     // there was an offline doc flag, but document wasn't in offline storage, re-save it there to fix future issues. 

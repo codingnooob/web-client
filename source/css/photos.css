@@ -694,6 +694,9 @@ PHOTO / MEDIA ITEM
     cursor: pointer;
     overflow: hidden;
     user-select: none;
+
+    border-radius: 1.125rem;
+
 }
 
 .media img {
@@ -934,6 +937,8 @@ ALBUM
 
     overflow: hidden;
 
+    border-radius: 1.125rem;
+    
 }
 
 

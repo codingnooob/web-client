@@ -2478,7 +2478,13 @@ async function attachSelectedFolderInline(fid) {
  * Show the correct embed modal
  * @param {('link'|'formula'|'video')} what Which embed modal to show 
  */
-function showEmbed(what) {
+async function showEmbed(what) {
+    if (isMobile) { 
+        // updateVisibleViewport & autoScrollWhileTyping is making this popup hide.
+        // autoscroll does its job in 300ms, so we act in 350ms here
+        await promiseToWait(350);
+    }
+
     if (what === "link") {
         $("#hyperlink-input").val("");
         togglePanel("link-box");

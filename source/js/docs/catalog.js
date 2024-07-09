@@ -1484,7 +1484,9 @@ async function saveDocToOfflineCatalog(docToSave, plaintextContents){
     var encryptedStringifiedContents;
     try {
         var stringifiedPlaintextContents = JSON.stringify(plaintextContents);
-        var encryptedContents = await encrypt(stringifiedPlaintextContents, [keyToRemember]);
+        let offlineKeys = [keyToRemember];
+        if (theKey) { offlineKeys.push(theKey); }
+        var encryptedContents = await encrypt(stringifiedPlaintextContents, [keyToRemember, theKey]);
         encryptedStringifiedContents = JSON.stringify(encryptedContents);
     } catch (error) {
         error.did = did;
@@ -1616,6 +1618,7 @@ async function getAllDocsFromOfflineCatalog() {
 }
 
 
+var keyWasChangedButOfflineDocWasNotSynced = {};
 
 /**
  * Loads & Decrypts an offline document (either from catalog, or directly if doc provided in params) 
@@ -1649,10 +1652,30 @@ async function loadDocFromOfflineCatalog(did, offlineDoc) {
     }
 
     var stringifiedPlaintextContents;
+    var oldKey;
+    let offlineKeys = [keyToRemember];
+    if (theKey) { offlineKeys.push(theKey); }
+    
     try {
-        stringifiedPlaintextContents = await decrypt(encryptedContents, [keyToRemember]);
+        stringifiedPlaintextContents = await decrypt(encryptedContents, [keyToRemember, theKey]);
     } catch (error) {
-        handleError('[CATALOG] Failed to decrypt offline doc contents', {did:did});
+        handleError('[CATALOG] Failed to decrypt offline doc contents. Key is different/changed Showing prompt!!', {did:did});
+        await promiseToWait(500);
+        oldKey = prompt("By any chance did you change your encryption key recently? It seems that this offline document was encrypted using another key before it was possible to sync while your key changed. Don't worry, your document is safe, and you can keep trying keys as many times as you need. Please enter your old encryption key to decrypt it:");
+        
+        try {
+            let hashedOldKey = await hashString(oldKey);
+            offlineKeys.push(hashedOldKey);
+            stringifiedPlaintextContents = await decrypt(encryptedContents, offlineKeys);
+            keyWasChangedButOfflineDocWasNotSynced[did] = true;
+        } catch (error) {
+            handleError('[CATALOG] Failed to decrypt offline doc contents. Key is different/changed. Prompt failed', {did:did});
+            return false;
+        }
+    }
+
+    if (!stringifiedPlaintextContents) {
+        handleError('[CATALOG] Failed to decrypt offline doc contents. Key is different/changed. Prompt failed', {did:did});
         return false;
     }
 
