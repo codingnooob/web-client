@@ -1059,7 +1059,7 @@ function search(term, searchID) {
 async function searchTitles(term, searchID) {
     
     // let's clear the array first
-    searchArray = [];
+    searchArray.length = 0;
     
     // now let's add all albums from memory to this 
     for (var aid in albums) {

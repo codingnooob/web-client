@@ -55,6 +55,10 @@ fonts.forEach(function(font) { fontNames.push(font.toLowerCase().replace(/\s/g, 
 Font.whitelist = fontNames;
 Quill.register(Font, true);
 
+// Add URL protocols to whitelist
+Quill.import('formats/link').PROTOCOL_WHITELIST = ['http', 'https', 'mailto', 'tel', 'sms', 'fmp', 'ftp', 'sftp', 'radar', 'rdar', 'smb', 'shortcuts', 'slack', 'spotify', 'skype', 'vscode', 'things', 'matrix', 'maps', 'geo', 'facetime'];
+
+
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////

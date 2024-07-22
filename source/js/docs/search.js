@@ -102,7 +102,7 @@ async function createSearchIndexFromCatalog() {
 
     if (!Number.isInteger(allDocsAndFolders.length)) {
         createPopup("Failed to search. Chances are this is a network problem, or your browser is configured to block access to localStorage / indexedDB. Please disable your content-blockers, check your connection, try again and reach out to our support via our helpdesk if this issue continues.", "error");
-        searchArray = [];
+        searchArray.length = 0;
         return false;
     }
 

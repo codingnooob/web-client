@@ -60,11 +60,11 @@
 
         <div class="bottom buttons right-side unselected">
             <button id="selectall-button" onclick="selectAll();">select all</button>
-            <button id="sort-button" onclick="showSorter();">sort</button>
+            <button id="sort-button" onclick="showSorter();">sort / filter</button>
         </div>
 
         <div class="bottom buttons left-side selected">
-            <button id="download-button" onclick="showDownloadPopup();">download</button>
+            <button id="download-button" onclick="showDownloadSizePicker();">download</button>
             <button id="move-button" onclick="showMoveModal();">move</button>
         </div>
         
@@ -74,15 +74,54 @@
         </div>
 
         <div id="sorter">
-            <small>name</small>
-            <i type="az-desc" class="sort-button ri-sort-desc"></i>
-            <i type="az-asc"  class="sort-button ri-sort-asc"></i>
-            
+
             <small>date</small>
+            <b></b>
             <i type="date-desc" class="sort-button ri-sort-desc"></i>
             <i type="date-asc"  class="sort-button ri-sort-asc"></i>
+
+            <small>name</small>
+            <b></b>
+            <i type="az-desc" class="sort-button ri-sort-desc"></i>
+            <i type="az-asc"  class="sort-button ri-sort-asc"></i>
+
+            <small>raw</small>
+            <i type="raw-only" class="filter-button ri-filter-2-line"></i>
+            <i type="raw-desc" class="sort-button ri-sort-desc"></i>
+            <i type="raw-asc"  class="sort-button ri-sort-asc"></i>
+
+            <small>favorites</small>
+            <i type="fav-only" class="filter-button ri-filter-2-line"></i>
+            <i type="fav-desc" class="sort-button ri-sort-desc"></i>
+            <i type="fav-asc"  class="sort-button ri-sort-asc"></i>
+
         </div>
         
+        <div id="download-size-picker">
+            
+            <i class="ri-close-circle-fill" onclick="hideDownloadSizePicker();"></i>
+
+            <p>choose download size</p>
+
+            <button id="button-download-ogsize" onclick="startDownloads('og');">
+                <b></b>
+                original size 
+                <small class="monospace">raw</small>
+            </button>
+
+            <button id="button-download-lgsize" onclick="startDownloads('lg');">
+                <b></b>
+                large size 
+                <small class="monospace">2048px</small>
+            </button>
+
+            <button id="button-download-smsize" onclick="startDownloads('sm');">
+                <b></b>
+                small size 
+                <small class="monospace">768px</small>
+            </button>
+        </div>
+
         <b class="top background"></b>
         <b class="bottom background"></b>
         
@@ -112,6 +151,7 @@
 
     <!-- @import "imports/app/photos-lightbox.kit" -->
     
+    <!-- @import "imports/app/photos-downloader.kit" -->
     <!-- @import "imports/app/uploader.kit" -->
 
     <!-- @import "imports/app/dropzone.kit" -->
@@ -120,7 +160,6 @@
     
     <!-- @import "imports/app/photos-popup-photo-info.kit" -->
     <!-- @import "imports/app/photos-popup-album-info.kit" -->
-    <!-- @import "imports/app/photos-popup-download.kit" -->
     <div id="create-popups-before-placeholder" style="display: none !important;"></div>
     
     

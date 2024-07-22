@@ -131,9 +131,22 @@ function prepareThumbnailBehindLightbox(pid) {
  * @param {string} pid PhotoID
  * @returns {number} photoIndex
  */
-function getMediaIndex(pid) {
+function getVisibleMediaIndex(pid) {
     if (!pid) { return 0; }
-    return $(".media").index("#"+pid);
+    const visibleMedia = Array.from($(".media")).filter(el => getComputedStyle(el).display !== 'none');
+    return visibleMedia.findIndex(el => el.id === pid);
+}
+
+function getNextVisibleMediaElement(thisMediaElement) {
+    const visibleMedia = Array.from($(".media")).filter(el => getComputedStyle(el).display !== 'none');
+    const currentIndex = visibleMedia.indexOf(thisMediaElement[0]);
+    return $(currentIndex < visibleMedia.length - 1 ? visibleMedia[currentIndex + 1] : visibleMedia[0]);
+}
+
+function getPreviousVisibleMediaElement(thisMediaElement) {
+    const visibleMedia = Array.from($(".media")).filter(el => getComputedStyle(el).display !== 'none');
+    const currentIndex = visibleMedia.indexOf(thisMediaElement[0]);
+    return $(currentIndex > 0 ? visibleMedia[currentIndex - 1] : visibleMedia[visibleMedia.length - 1]);
 }
 
 /**
@@ -186,7 +199,7 @@ function lightboxMediaChanged() {
             stopLightboxProgress();
         }
 
-        var nextPhoto = thisMedia.next(".media");
+        var nextPhoto = getNextVisibleMediaElement(thisMedia)
         if (nextPhoto.length) {
             nextMediaID = nextPhoto.attr("id");
             preloadLightboxImage(nextMediaID);
@@ -195,7 +208,7 @@ function lightboxMediaChanged() {
             $("#lightbox-next").addClass("disabled");
         }
         
-        var prevPhoto = thisMedia.prev(".media");
+        var prevPhoto = getPreviousVisibleMediaElement(thisMedia);
         if (prevPhoto.length) {
             prevMediaID = prevPhoto.attr("id");
             preloadLightboxImage(prevMediaID);
@@ -302,7 +315,7 @@ function loadMediaEXIFToLightbox(pid) {
  */
 function isMediaInLightboxCache(pid) {
     var inCache = false;
-    var slideIndex = getMediaIndex(pid);
+    var slideIndex = getVisibleMediaIndex(pid);
     if (lbox.cache && ($(lbox.cache[slideIndex]).find("img").attr("loaded") || $(lbox.cache[slideIndex]).find("video").attr("poster"))) {
         inCache = true;
     }
@@ -312,7 +325,7 @@ function isMediaInLightboxCache(pid) {
 
 function isVideoInLightboxCache(pid) {
     var inCache = false;
-    var slideIndex = getMediaIndex(pid);
+    var slideIndex = getVisibleMediaIndex(pid);
     if (lbox.cache && $(lbox.cache[slideIndex]).find("video").attr("loaded")) {
         inCache = true;
     }
@@ -451,10 +464,16 @@ function lightboxZoomChanged(event, scale) {
 
 /**
  * Updates the sort order of lightbox if the album's sort order changes, to keep up with the order of things 
- * @param {('az-asc'|'az-desc'|'date-asc'|'date-desc')} sorttype        
+ * @param {('az-asc'|'az-desc'|'date-asc'|'date-desc'|'fav-asc'|'fav-desc'|'raw-asc'|'raw-desc')} sorttype Sorting Type 
  */
 function updateLightboxSort(sorttype) {
-    sorttype = sorttype || "date-desc";
+
+    console.log("[LIGHTBOX SORT] Updating...");
+    
+    sorttype = sorttype || $(".sort-button.selected").attr("type");
+
+    let filterRawOnly = $("body").attr("filter-raw-only")? true : false;
+    let filterFavOnly = $("body").attr("filter-fav-only")? true : false;
 
     // remove all lightbox events to stop thousands of slideChange events from triggering.
     // and remove all slides from lightbox 
@@ -464,7 +483,15 @@ function updateLightboxSort(sorttype) {
     var lightboxContentsHTML = [];
 
     $(".content.media").each(function(){
-       var pid = $(this).attr("id"); 
+       var pid = $(this).attr("id");
+       var isPhotoFavorited = favorites[pid]? true : false;
+       
+       var photo = photos[pid] || {};
+       var isPhotoRaw = photo.raw || false;
+
+       if (filterRawOnly && !isPhotoRaw) { return; }
+       if (filterFavOnly && !isPhotoFavorited) { return; }
+       
        lightboxContentsHTML.push(renderLightboxMedia(pid));
     });
 

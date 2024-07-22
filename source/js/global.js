@@ -973,10 +973,14 @@ async function mimetypeFromFilename(filename) {
 
   // common ones to save 200ms roundtrip time
   // image
-  if (ext === "jpg" || ext === "jpeg") { mimetype = "image/jpeg";       }
-  if (ext === "png")                   { mimetype = "image/png";        }
-  if (ext === "gif")                   { mimetype = "image/gif";        }
-  if (ext === "webp")                  { mimetype = "image/webp";       }
+  if (ext === "jpg" || ext === "jpeg") { mimetype = "image/jpeg";             }
+  if (ext === "png")                   { mimetype = "image/png";              }
+  if (ext === "gif")                   { mimetype = "image/gif";              }
+  if (ext === "webp")                  { mimetype = "image/webp";             }
+  if (ext === "dng")                   { mimetype = "image/x-adobe-dng";      }
+  if (ext === "tif" || ext === "tiff") { mimetype = "image/tiff";             }
+  if (ext === "3fr")                   { mimetype = "image/x-hasselblad-3fr"; }
+  if (ext === "fff")                   { mimetype = "image/x-hasselblad-fff"; }
 
   // audio
   if (ext === "mp3")                   { mimetype = "audio/mpeg";       }
@@ -1481,6 +1485,16 @@ async function saveAsOrShare(blob, filename, forceSaveAs, shareText) {
 
   }
   
+}
+
+
+/**
+ * Opens the share dialog for user to conveniently save / share multiple files. 
+ * We only use this on iOS and Android PWAs to show the share dialog.  
+ * @param {Array} files
+ */
+async function shareMultiple(files) {
+    return navigator.share({ title: "Cryptee Photos", files: files });
 }
 
 ////////////////////////////////////////////////

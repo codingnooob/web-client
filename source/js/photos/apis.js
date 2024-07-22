@@ -214,13 +214,14 @@ async function getThumbnail (thumbImgID, thumbToken, wrapperElem, imgElem) {
 /**
  * Downloads, decrypts and returns a decrypted Base64 or blob photo
  * @param {string} photoID The ID of the photo. could be pid, tid, lid etc 
- * @param {('p'|'t'|'l'|'v'|'r')} size The siize of the photo 
+ * @param {('p'|'t'|'l'|'v'|'r')} size The size of the photo 
  * @param {('url'|'blob')} outputFormat The output format of the photo (i.e. blob url or blob). Defaults to "url", as that's what we use the most.
+ * @param {string} token The token of the photo, IF WE KNOW IT, otherwise you can skip this, we'll get it from server. slower but still works.
  * @returns {*} img if the image is V1 or V2 upload, this is b66. If it's a v3 upload, thumb & lightbox sizes are b64, and original is a blob
  */
-async function getMedia(photoID, size, outputFormat) {
+async function getMedia(photoID, size, outputFormat, token) {
     outputFormat = outputFormat || "url";
-
+    token = token || "";
     size = size || "l";
     
     if (!photoID) {
@@ -244,10 +245,11 @@ async function getMedia(photoID, size, outputFormat) {
 
     var localPhoto = photos[pid] || favorites[pid] || {}; 
 
-    var token;
-    if (size === "p" || size === "v") { token = localPhoto.otoken || ""; }
-    if (size === "l")                 { token = localPhoto.ltoken || ""; }
-    if (size === "t")                 { token = localPhoto.ttoken || ""; }
+    if (!token) {
+        if (size === "p" || size === "v") { token = localPhoto.otoken || ""; }
+        if (size === "l")                 { token = localPhoto.ltoken || ""; }
+        if (size === "t")                 { token = localPhoto.ttoken || ""; }
+    }
     
     var decryptedPhoto;
     

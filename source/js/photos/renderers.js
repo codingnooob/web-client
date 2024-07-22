@@ -62,6 +62,32 @@ function renderAlbum(aid, photos) {
     
 }
 
+/**
+ * Renders an album for the move modal
+ * @param {*} album 
+ * @param {Number} index 
+ * @returns {string} albumHTML
+ */
+function renderAlbumForMoveModal(album, index) {
+
+    // we do this so that large libraries load quickly as well.
+    index = index % 16; 
+    
+    let active      = album.id === activeAlbumID;
+    let disabled    = active? "disabled" : "";
+    let current     = active? "CURRENT ALBUM" : "";
+    let name        = album.decryptedTitle;
+    let exifDate    = album.date  || "0000:00:00";  
+    let date        = fancyDate(exifDate);
+    var thumbID     = album.thumb || "";
+
+    return `<button class="radio" group="move" val="${album.id}" ${disabled} style='--i:${index}'>
+        <strong>${name}</strong>
+        <time>${current || date}</time>
+        <img src="" alt thumb="${thumbID}">
+    </button>`
+
+}
 
 /**
  * Renders an album header with given ID, and returns its HTML
@@ -169,6 +195,7 @@ function renderMedia(id, forSearch) {
     var maker = "";
     if (photo['exif-make']) { 
         maker = (photo['exif-make'] || "").toLowerCase();
+        if (maker.includes("apple"))       { maker = "maker='apple'"; }    
         if (maker.includes("leica"))       { maker = "maker='leica'"; }
         if (maker.includes("hasselblad"))  { maker = "maker='hasselblad'"; }    
     }
@@ -187,8 +214,11 @@ function renderMedia(id, forSearch) {
     var favTag = `<b></b>`;
     if (favorites[id]) { favTag=`<b fav="true"></b>`;}
 
+    var favAttr = '';
+    if (favorites[id]) { favAttr = `fav="true"`; }
+
     return `
-    <div class="content media ${type}" id="${id}" name="${name}" datesort="${sortableDate}" exifDate="${exifDate}" thumb="${thumbID}" thumbToken="${thumbToken}" style="--bg:rgb(${avgColor})" ${raw} ${maker}>
+    <div class="content media ${type}" id="${id}" name="${name}" datesort="${sortableDate}" exifDate="${exifDate}" thumb="${thumbID}" thumbToken="${thumbToken}" style="--bg:rgb(${avgColor})" ${raw} ${maker} ${favAttr}>
         ${selectionIcon}
         <img src="" alt thumb="${thumbID}">
         ${rawTag}

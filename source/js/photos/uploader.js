@@ -410,8 +410,8 @@ async function uploadQueueFinished(aid) {
     
     }
 
-    uploadQueue = {};
-    uploadQueueOrder = [];
+    Object.keys(uploadQueue).forEach(k => delete uploadQueue[k]);
+    uploadQueueOrder.length = 0;
 
     if (aid && aid !== "home" && !albums[aid].thumb) {
         var firstPhotoInAlbum = albums[aid].photos[0];

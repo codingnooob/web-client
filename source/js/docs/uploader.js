@@ -701,8 +701,8 @@ async function uploadQueueFinished(targetFID, embed) {
         }
     }
 
-    uploadQueue = {};
-    uploadQueueOrder = [];
+    Object.keys(uploadQueue).forEach(k => delete uploadQueue[k]);
+    uploadQueueOrder.length = 0;
 
     stopDropzoneProgresses();
 

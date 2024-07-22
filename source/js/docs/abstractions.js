@@ -1111,7 +1111,7 @@ function shiftToggledDocSelection(where, did) {
  * Clears selections, and hides selection popup
  */
 function clearSelections() {
-    selections = [];
+    selections.length = 0;
     $(".doc.selected").removeClass("selected");
     hideRightClickDropdowns();
     hidePanels();
@@ -2511,7 +2511,11 @@ function confirmEmbed(what) {
         var link = $("#hyperlink-input").val() || "";
 
         // if the link doesn't have http (i.e. "www.google.com"), auto-add https
-        if (!link.startsWith("http")) { link = "https://" + link; }
+        if (link.startsWith("http:")) {
+            link = "https://" + link.slice(7);
+        } else if (!link.includes("://")) {
+            link = "https://" + link;
+        }
         
         if (link) { quillSafelyFormat('link', link.trim()); }
     }
@@ -2615,10 +2619,10 @@ async function optimizeImageFile(imgFile) {
     // read exif from original buffer (should take about 30ms, even for a 30mb file)
     var exif = await readEXIF(imgFile);
 
-    var orientation;
+    // var orientation;
 
     // if the browser won't handle orientation, and there's exif orientation data, use it to rotate pic.
-    if (!browserWillHandleEXIFOrientation && exif.Orientation) { orientation = exif.Orientation; }
+    // if (!browserWillHandleEXIFOrientation && exif.Orientation) { orientation = exif.Orientation; }
 
     var resizedCanvas = document.createElement("canvas");
     var resizedContext = resizedCanvas.getContext("2d");
@@ -2771,7 +2775,7 @@ async function embedImageFromCryptee(did) {
 
 var tocArray = [];
 function generateTableOfContents() {
-    tocArray = [];
+    tocArray.length = 0;
     var tocIndex = 0;
     $("#tableofcontents").empty();
 

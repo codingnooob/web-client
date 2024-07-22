@@ -511,3 +511,27 @@ MEDIA QUERIES
         transform: translate3d(0,0,0);
     }
 }
+
+/* -----------------------------
+-------------------------------- 
+ 
+VIEW TRANSITIONS 
+ 
+--------------------------------
+----------------------------- */
+/* #region VIEW TRANSITIONS */
+
+
+@supports (view-transition-name: none) {
+
+    @view-transition { navigation: auto; }
+
+    ::view-transition-group(root) {
+        animation-duration: 0.5s;
+        animation-timing-function: ease-out;
+        animation-direction: normal;
+    }
+
+}
+
+/* #endregion VIEW TRANSITIONS */

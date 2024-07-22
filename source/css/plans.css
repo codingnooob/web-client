@@ -1073,3 +1073,28 @@ ENABLE HOVERS
     #countries:hover { box-shadow: 0 0 0 2px var(--cryptee-3) !important; }
 }
 
+
+
+/* -----------------------------
+-------------------------------- 
+ 
+VIEW TRANSITIONS 
+ 
+--------------------------------
+----------------------------- */
+/* #region VIEW TRANSITIONS */
+
+@supports (view-transition-name: none) {
+    
+    @view-transition { navigation: auto; }
+
+    ::view-transition-group(root) {
+        animation-duration: 0.5s;
+        animation-timing-function: ease-out;
+        animation-direction: normal;
+    }
+    
+}
+
+
+/* #endregion VIEW TRANSITIONS */

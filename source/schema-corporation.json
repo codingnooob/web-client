@@ -10,7 +10,7 @@
     "address": {
         "@type": "PostalAddress",
         "name": "Cryptee",
-        "addressCountry": "Estonia",
+        "addressCountry": "EE",
         "addressLocality": "Tallinn",
         "addressRegion": "Harjumaa",
         "streetAddress": "Svartlab OÜ, Narva mnt 5",

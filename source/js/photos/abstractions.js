@@ -20,6 +20,7 @@ function prepBeforeLoadingAlbumOrFavorites() {
     startMainProgress();
 
     hideSorter();
+    resetAlbumFilters();
     hideAllPopups();
     clearSelections();
     clearSearch();
@@ -336,7 +337,7 @@ async function loadMedia(pid) {
         mediaDataURL = mediaDataURL || $("img[thumb='"+thumbID+"']").attr("src");
     }
 
-    var photoIndex = getMediaIndex(pid);
+    var photoIndex = getVisibleMediaIndex(pid);
 
     // this will make sure the div is now in DOM (and not just in virtual slider DOM) so that you can add the image into it
     lightbox.slideTo(photoIndex, null, false);   
@@ -558,7 +559,7 @@ async function decryptPhotoDescription(pid) {
 
 /**
  * This sorts the active active album's contents with the given sorting type, and returns a sorted array of albums / photos etc.
- * @param {('az-asc'|'az-desc'|'date-asc'|'date-desc')} sorttype Sorting Type
+ * @param {('az-asc'|'az-desc'|'date-asc'|'date-desc'|'fav-asc'|'fav-desc'|'raw-asc'|'raw-desc')} sorttype Sorting Type
  * @returns {Array} sortedAlbumContentsArray an array of sorted album contents (albums / photos etc.)
  */
 function getSortedActiveAlbumContents(sorttype) {
@@ -590,7 +591,9 @@ function getSortedActiveAlbumContents(sorttype) {
                     var photo = photos[photoID];
                     var photoTitle = (photo.decryptedTitle || "Untitled.jpg");
                     var photoDate = (photo.date || "").split("0000:00:00T00:00:00")[0] || "0000:00:00";
-                    titlesArray.push([photoID, photoTitle, photoDate]);
+                    var photoIsFavorited = favorites[photoID]? true : false;
+                    var photoIsRaw = photo.raw || false;
+                    titlesArray.push([photoID, photoTitle, photoDate, photoIsFavorited, photoIsRaw]);
                 }
             });
         }
@@ -632,6 +635,38 @@ function getSortedActiveAlbumContents(sorttype) {
                 return 1;
             }
         });
+    } else if (sorttype === "fav-asc") {
+        $(".sort-button[type='fav-asc']").addClass("selected");
+        titlesArray.sort(function (a, b) {
+            var aFav = a[3] === true;
+            var bFav = b[3] === true;
+            if (aFav === bFav) return 0;
+            return aFav ? 1 : -1;
+        });
+    } else if (sorttype === "fav-desc") {
+        $(".sort-button[type='fav-desc']").addClass("selected");
+        titlesArray.sort(function (a, b) {
+            var aFav = a[3] === true;
+            var bFav = b[3] === true;
+            if (aFav === bFav) return 0;
+            return aFav ? -1 : 1;
+        });
+    } else if (sorttype === "raw-asc") {
+        $(".sort-button[type='raw-asc']").addClass("selected");
+        titlesArray.sort(function (a, b) {
+            var aRaw = a[4] === true;
+            var bRaw = b[4] === true;
+            if (aRaw === bRaw) return 0;
+            return aRaw ? 1 : -1;
+        });
+    } else if (sorttype === "raw-desc") {
+        $(".sort-button[type='raw-desc']").addClass("selected");
+        titlesArray.sort(function (a, b) {
+            var aRaw = a[4] === true;
+            var bRaw = b[4] === true;
+            if (aRaw === bRaw) return 0;
+            return aRaw ? -1 : 1;
+        });
     } else {
         // UNKNOWN SORT, use date-desc instead
         return getSortedActiveAlbumContents("date-desc");
@@ -648,7 +683,7 @@ function getSortedActiveAlbumContents(sorttype) {
 
 /**
  * Sorts all visible items (i.e. photos / albums etc) and updates the lightbox & timeline
- * @param {('az-desc'|'az-asc'|'date-desc'|'date-asc')} sorttype The sort order / type 
+ * @param {('az-desc'|'az-asc'|'date-desc'|'date-asc'|'fav-asc'|'fav-desc'|'raw-asc'|'raw-desc')} sorttype The sort order / type 
  */
 function sortThings(sorttype) {
     sorttype = sorttype || "date-desc";
@@ -667,6 +702,34 @@ function sortThings(sorttype) {
             var at = ($(a).attr("name") || "").toUpperCase();
             var bt = ($(b).attr("name") || "").toUpperCase();
             if (at < bt) { return -1; } else { return 1; }
+        };
+    } else if (sorttype === "fav-asc"){
+        sortFunction = function(a,b) {
+            var aFav = $(a).attr("fav") === "true";
+            var bFav = $(b).attr("fav") === "true";
+            if (aFav === bFav) return 0;
+            return aFav ? 1 : -1;
+        };
+    } else if (sorttype === "fav-desc"){
+        sortFunction = function(a,b) {
+            var aFav = $(a).attr("fav") === "true";
+            var bFav = $(b).attr("fav") === "true";
+            if (aFav === bFav) return 0;
+            return aFav ? -1 : 1;
+        };
+    } else if (sorttype === "raw-asc") {
+        sortFunction = function(a,b) {
+            var aRaw = $(a).attr("raw") === "true";
+            var bRaw = $(b).attr("raw") === "true";
+            if (aRaw === bRaw) return 0;
+            return aRaw ? 1 : -1;
+        };
+    } else if (sorttype === "raw-desc") {
+        sortFunction = function(a,b) {
+            var aRaw = $(a).attr("raw") === "true";
+            var bRaw = $(b).attr("raw") === "true";
+            if (aRaw === bRaw) return 0;
+            return aRaw ? -1 : 1;
         };
     } else if (sorttype === "date-asc") {
         sortFunction = function(a,b) {
@@ -694,8 +757,6 @@ function sortThings(sorttype) {
 function getCurrentSort() {
     return $('.sort-button.selected').attr("type");
 }
-
-
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -1075,21 +1136,25 @@ function togglePhotoSelection(pid) {
 
 
 /**
- * Selects multiple photos
+ * Selects multiple visible photos (i.e. of the filtered ones etc)
  * @param {*} startIndex 
  * @param {*} endIndex 
  */
 function selectPhotos(startIndex, endIndex) {
-    $(".media").slice(startIndex, endIndex).addClass("selected");
+    const visibleMedia = Array.from($(".media")).filter(el => window.getComputedStyle(el).display !== 'none');
+    const [start, end] = startIndex < endIndex ? [startIndex, endIndex + 1] : [endIndex, startIndex + 1];
+    visibleMedia.slice(start, end).forEach(el => el.classList.add("selected"));
     updateSelections();
 }
 
 
+
 /**
- * Selects all photos
+ * Selects all visible photos (i.e. of the filtered ones etc)
  */
 function selectAll() {
-    $(".content.media").addClass("selected");
+    const elements = $('.content.media');
+    elements.forEach(el => { if (window.getComputedStyle(el).display !== 'none') { el.classList.add('selected'); } });
     updateSelections();
 }
 
@@ -1100,32 +1165,34 @@ function selectAll() {
 function clearSelections() {
     $(".media.selected").removeClass("selected");
     updateSelections();
-
-    if (!downloadingPhotos) {
-        hidePopup("popup-download");
-    }
-
     hideActiveModal();
 }
 
 
+
+
 /**
- * Shift selects a photo
+ * Shift selects a visible photo
  * @param {string} photoID 
  */
 function shiftSelectedPhoto(photoID) {
-    var lastSelectedPhotoBeforeThisOne = 0;
-            
-    $(".media").forEach(photo => {
-        var selected = $(photo).hasClass("selected");
-        if ($(photo).index() < $("#"+photoID).index() && selected) {
-            lastSelectedPhotoBeforeThisOne = ($(photo).index() || 1) - 1;
-        }
-    });
+    const visibleMedia = Array.from($(".media")).filter(el => window.getComputedStyle(el).display !== 'none');
+    const targetIndex = visibleMedia.findIndex(el => el.id === photoID);
     
-    selectPhotos(lastSelectedPhotoBeforeThisOne, $("#"+photoID).index());
-}
+    let lastSelectedIndex = -1;
+    for (let i = 0; i < visibleMedia.length; i++) {
+        if (visibleMedia[i].classList.contains("selected")) {
+            lastSelectedIndex = i;
+        }
+        if (i === targetIndex) break;
+    }
 
+    if (lastSelectedIndex === -1 || lastSelectedIndex === targetIndex) {
+        lastSelectedIndex = targetIndex;
+    }
+
+    selectPhotos(lastSelectedIndex, targetIndex);
+}
 
 /**
  * Updates selections to reflect UI changes
@@ -1136,17 +1203,6 @@ function updateSelections() {
         navbarForSelectionModeOn();
     } else {
         navbarForSelectionModeOff();
-    }
-
-    if ((isios || isipados) && noSelectedPhotos > 1) {
-        // DISABLE DOWNLOAD BUTTON. 
-        // SADLY IOS ONLY ALLOWS DOWNLOADING ONE PHOTO AT A TIME.
-        $("#download-button").addClass("ios");
-        $("#start-downloads-button").addClass("ios");
-    } else {
-        // ENABLE DOWNLOAD BUTTON.
-        $("#download-button").removeClass("ios");
-        $("#start-downloads-button").removeClass("ios");
     }
 
     if (activeAlbumID !== "home" && activeAlbumID !== "favorites") {
@@ -1184,22 +1240,14 @@ function selectedPhotos() {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
-/**
- * SHOWS BULK DOWNLOAD POPUP
- */
-function showDownloadPopup() {
-    if (selectedPhotos().length < 1) { return; }
-    if ((isios || isipados) && selectedPhotos().length > 1) { return; }
-    $("#popup-download").find(".status").html("DOWNLOAD PHOTOS");
-    showPopup("popup-download");
-}
-
 var downloadingPhotos = false;
 
 /**
- * STARTS BULK DOWNLOADING PHOTOS
+ * Starts bulk downloads using the picked download size. If none picked, then it's og.
+ * @param {('og'|'lg'|'sm')} pickedDownloadSize 
+ * @returns 
  */
-async function startDownloads() {
+async function startDownloads(pickedDownloadSize) {
     
     // download in a batch of 2 for now, since parallel decrypting more stuff could mess things up. 
     // i.e. if a photo is 500mb, 2 of these would take ~1000mb memory. 
@@ -1208,33 +1256,51 @@ async function startDownloads() {
         return; 
     }
 
-    var batchSize = 2;
-    var selections = selectedPhotos();
-    var isDownloadingMultiplePhotos = false;
-    if (selections.length > 1) { isDownloadingMultiplePhotos = true; }
-
     downloadingPhotos = true;
     downloadsCancelled = false;
-    $("#start-downloads-button").addClass("downloading");
-
-    minimizeMaximizePopup("popup-download");
     
+    var selections = selectedPhotos();
     breadcrumb(`[DOWNLOAD PHOTOS] Starting to download a total of ${selections.length} photo(s) in batches of 2`);
     
-    for (var index = 0; index < selections.length; index+= batchSize) {
-        if (!downloadsCancelled) {
-            var firstPID = selections[index] || "";
-            var secondPID = selections[index + 1] || "";
-            $("#popup-download").find(".status").html(`DOWNLOADING ${index} / ${selections.length}`);
-            await Promise.all([downloadAndSaveMedia(firstPID, isDownloadingMultiplePhotos), downloadAndSaveMedia(secondPID, isDownloadingMultiplePhotos)]);
+    hideDownloadSizePicker();
+    $("body").addClass("downloading");
+    $('#photos-downloader').addClass("show");
+    $('#photos-downloader').removeClass("done");
+    $("#photos-downloader > small").text(`0/${selections.length}`);
+    
+    if (isios || isipados || isAndroid) {
+        
+        breadcrumb("[DOWNLOAD PHOTOS] iOS/Android, so using bulk downloader with native share dialog.");
+        await downloadAndSaveMultipleMedia(pickedDownloadSize);
+
+    } else {
+        
+        breadcrumb("[DOWNLOAD PHOTOS] non-iOS/Android, so using old school downloader without share dialog.");
+
+        $("#start-downloads-button").addClass("downloading");
+
+        var batchSize = 2;
+        var isDownloadingMultiplePhotos = false;
+        if (selections.length > 1) { isDownloadingMultiplePhotos = true; }
+
+        for (var index = 0; index < selections.length; index+= batchSize) {
+            if (!downloadsCancelled) {
+                var firstPID = selections[index] || "";
+                var secondPID = selections[index + 1] || "";
+                $("#photos-downloader > small").text(`${index + 1}/${selections.length}`);
+                await Promise.all([downloadAndSaveMedia(firstPID, isDownloadingMultiplePhotos, pickedDownloadSize), downloadAndSaveMedia(secondPID, isDownloadingMultiplePhotos, pickedDownloadSize)]);
+            }
         }
+
+        $("body").removeClass("downloading");
+        $('#photos-downloader').removeClass("show");
+        $("#start-downloads-button").removeClass("downloading");
+
     }
 
     downloadingPhotos = false;
     downloadsCancelled = false;
-    $("#start-downloads-button").removeClass("downloading");
-
-    hidePopup("popup-download");
+    
     // DOWNLOAD COMPLETE
 
     return true;
@@ -1244,11 +1310,18 @@ async function startDownloads() {
 /**
  * Downloads and saves a media to disk
  * @param {string} pid Media ID
+ * @param {('og'|'lg'|'sm')} pickedDownloadSize 
  * @param {*} isDownloadingMultipleItems (this will be passed = true, if we're downloading this photo/video as a part of a batch, which will force "save as", instead of showing the native share dialog in ios and android pwa) 
  */
-async function downloadAndSaveMedia(pid, isDownloadingMultipleItems) {
+async function downloadAndSaveMedia(pid, isDownloadingMultipleItems, pickedDownloadSize) {
     if (!pid) { return false; } // likely the last in batch (an odd number)
     if (downloadsCancelled) { return false; } // download canceled;
+    pickedDownloadSize = pickedDownloadSize || 'og';
+
+    let downloadSize = "p";
+    if (pickedDownloadSize === 'og') { downloadSize = "p"; }
+    if (pickedDownloadSize === "lg") { downloadSize = "l"; }
+    if (pickedDownloadSize === "sm") { downloadSize = "t"; }
 
     // if we're downloading / saving multiple photos, 
     // we'll need to force saveAs instead of showing the user the native share popup on ios/android PWA. 
@@ -1264,7 +1337,7 @@ async function downloadAndSaveMedia(pid, isDownloadingMultipleItems) {
         if (isVideo) {
             mediaBlob = await getMedia(pid, "v", "blob");
         } else {
-            mediaBlob = await getMedia(pid, "p", "blob");
+            mediaBlob = await getMedia(pid, downloadSize, "blob");
         }
     } catch (error) {
         error.pid = pid;
@@ -1281,6 +1354,10 @@ async function downloadAndSaveMedia(pid, isDownloadingMultipleItems) {
         if (!isEmpty(photos[pid])) { title = photos[pid].decryptedTitle || "Untitled.jpg"; }
     }
 
+    if (pickedDownloadSize !== "og") {
+        title = titleFromFilename(title) + "_" + pickedDownloadSize + ".jpg";
+    }
+
     try {
         saveAsOrShare(mediaBlob, title, isDownloadingMultipleItems);
     } catch (error) {
@@ -1293,15 +1370,191 @@ async function downloadAndSaveMedia(pid, isDownloadingMultipleItems) {
 }
 
 
+
+let downloadedFilesCacheFallback = [];
+let usingCacheAPIFallbackForDownloads = false;
+/**
+ * Downloads and buffers media in memory to be shared by the user once they click "save". 
+ * Used on mobile devices. On desktop we just go ahead and download. 
+ * On mobile we need to show the share popup, hence the buffering.
+ * @param {('og'|'lg'|'sm')} pickedDownloadSize 
+ * @returns 
+ */
+async function downloadAndSaveMultipleMedia(pickedDownloadSize) {
+    
+    pickedDownloadSize = pickedDownloadSize || 'og';
+    let downloadSize = "p";
+    if (pickedDownloadSize === 'og') { downloadSize = "p"; }
+    if (pickedDownloadSize === "lg") { downloadSize = "l"; }
+    if (pickedDownloadSize === "sm") { downloadSize = "t"; }
+
+    let pids = selectedPhotos();
+    
+    let cache;
+    try {
+        cache = await caches.open('downloads-cache-v1');
+        // first clear the cache
+        await cache.keys().then(keys => Promise.all(keys.map(key => cache.delete(key)))); 
+    } catch (error) {
+        handleError("[DOWNLOAD MULTIPLE MEDIA] Failed to open cache. Will use array in memory.", pids, "fatal");
+        downloadedFilesCacheFallback.length = 0;
+        usingCacheAPIFallbackForDownloads = true;
+    }
+
+    // this is to allow the browser to clear the downloadedFiles
+    await promiseToWait(100);
+
+    let downloaded = 0;
+    for (const pid of pids) {
+
+        if (downloadsCancelled) { return false; } // download canceled;
+        
+        var isVideo = pid.startsWith("v-");
+
+        breadcrumb(`[DOWNLOAD/SHARE MULTIPLE MEDIA] Downloading ${pid}`);
+
+        var mediaBlob;
+
+        try {
+            if (isVideo) {
+                mediaBlob = await getMedia(pid, "v", "blob");
+            } else {
+                mediaBlob = await getMedia(pid, downloadSize, "blob");
+            }
+        } catch (error) {
+            error.pid = pid;
+            handleError("[DOWNLOAD/SHARE MULTIPLE MEDIA] Couldn't Download Media", error);
+            return false;
+        }
+
+        var title;
+        if (isVideo) {
+            title = "Untitled.mp4";
+            if (!isEmpty(photos[pid])) { title = photos[pid].decryptedTitle || "Untitled.mp4"; }
+        } else {
+            title = "Untitled.jpg"; 
+            if (!isEmpty(photos[pid])) { title = photos[pid].decryptedTitle || "Untitled.jpg"; }
+        }
+
+        if (pickedDownloadSize !== "og") {
+            title = titleFromFilename(title) + "_" + pickedDownloadSize + ".jpg";
+        }
+
+        var fileType = await mimetypeFromFilename(title) || "text/plain";
+
+        const file = new File([mediaBlob], title, { type: fileType });
+        
+        if (usingCacheAPIFallbackForDownloads) {
+            downloadedFilesCacheFallback.push(file);
+        } else {
+            try {
+                await cache.put(`/${pid}/${title}`, new Response(file));
+            } catch (error) {
+                handleError("[DOWNLOAD MULTIPLE MEDIA] Failed to add file to cache. Will use array in memory.", pids, "fatal");
+                downloadedFilesCacheFallback.push(file);
+                usingCacheAPIFallbackForDownloads = true;
+            } 
+        }
+
+        breadcrumb(`[DOWNLOAD/SHARE MULTIPLE MEDIA] Downloaded ${pid}`);
+        downloaded++;
+        $("#photos-downloader > small").text(`${downloaded}/${pids.length}`);
+
+    }
+
+    $('#photos-downloader circle').each(function(){
+        this.addEventListener('animationiteration', () => { 
+            $(this).addClass('done');
+        }, {once: true});
+    });
+
+    setTimeout(function () {
+        $('#photos-downloader').addClass("done");
+    }, 500);
+
+    return true;
+
+}
+
+
+async function tapToShareMultipleFiles() {
+
+    breadcrumb(`[DOWNLOAD/SHARE MULTIPLE MEDIA] User tapped share`);
+
+    try {
+
+        if (usingCacheAPIFallbackForDownloads) {
+            await navigator.share({ files : downloadedFilesCacheFallback });
+        } else {
+            
+            try {
+                
+                const cache = await caches.open('downloads-cache-v1');
+                const keys = await cache.keys();
+    
+                const files = await Promise.all(keys.map(async key => {
+                    const resp = await cache.match(key);
+                    const blob = await resp.blob();
+                    return new File([blob], key.url.split('/').pop(), { type: blob.type });
+                }));
+    
+                await navigator.share({ files: files });
+    
+            } catch (error) {
+                handleError("[TAP TO SHARE MULTIPLE FILES] Failed to get files from cache.");
+                await navigator.share({ files : downloadedFilesCacheFallback });
+            }
+
+        }
+
+        breadcrumb(`[DOWNLOAD/SHARE MULTIPLE MEDIA] Share successful! Closing!`);
+
+        $('#photos-downloader').removeClass("show");
+        $("body").removeClass("downloading");
+        
+        try {
+            await cache.keys().then(keys => Promise.all(keys.map(key => cache.delete(key))));             
+        } catch (e) {}
+        downloadedFilesCacheFallback.length = 0;
+        
+        return true;
+
+    } catch (error) {
+        let errormsg = error.message.toLowerCase();
+        if (errormsg.includes("abort") || errormsg.includes("allowed")) {
+            breadcrumb(`[DOWNLOAD/SHARE MULTIPLE MEDIA] User aborted share`);
+        } else {
+            error.pids = selectedPhotos();
+            handleError("[DOWNLOAD MEDIA] Couldn't Save/Share Multiple Media", error);
+            $('#photos-downloader').removeClass("show");
+            $("body").removeClass("downloading");
+            return false;
+        }
+
+    }
+}
+
+
 var downloadsCancelled = false;
 
 /**
  * Cancels downloads
  */
-function cancelDownloads() {
+async function closePhotosDownloader() {
+    
+    breadcrumb(`[DOWNLOAD/SHARE MULTIPLE MEDIA] Closing downloader...`);
     downloadsCancelled = true;
-    hidePopup("popup-download");
-    $("#start-downloads-button").removeClass("downloading");
+    
+    $('#photos-downloader').removeClass("show");
+    $("body").removeClass("downloading");
+    
+    try {
+        const cache = await caches.open('downloads-cache-v1');
+        await cache.keys().then(keys => Promise.all(keys.map(key => cache.delete(key)))); 
+    } catch (error) {}
+    
+    downloadedFilesCacheFallback.length = 0;
+
 }
 
 
@@ -1432,11 +1685,6 @@ function showEditAlbumPopup(aid) {
     if (!isMobile) { $("#album-name")[0].select(); }
     
 }
-
-$("#albumContents").on('click', "#albumheader", function () {
-    showEditAlbumPopup();
-}); 
-
 
 /**
  * Update's the edit album popup contents (i.e. album name / date etc) mainly to be used when you create a new album during uploads
@@ -1663,7 +1911,7 @@ async function deleteSelectedPhotos() {
     // separate loop from the one below, because we need photos' DOM indexes, 
     // and in the loop below we'll remove them from DOM.
     photosToDelete.forEach(pid => {
-        var slideIndex = getMediaIndex(pid);
+        var slideIndex = getVisibleMediaIndex(pid);
         lbox.removeSlide(slideIndex);
     });
     
@@ -1901,7 +2149,7 @@ async function unfavoritePhoto(pid) {
         $("#" + pid).remove();
 
         if ($("#lightbox").hasClass("show")) {
-            var slideIndex = getMediaIndex(pid);
+            var slideIndex = getVisibleMediaIndex(pid);
             lbox.removeSlide(slideIndex);
             if (lbox.slides.length <= 0) {
                 hideLightbox();
@@ -2150,34 +2398,86 @@ async function showMoveModal() {
 
     var albumsArray = [];
     Object.keys(albums).forEach(aid => {
-        if (aid !== "favorites" && aid !== "home") {
-            var album = albums[aid];
-            album.id = aid;
-            albumsArray.push(album);
-        }
+        if (aid === "favorites" || aid === "home") { return; }
+        
+        var album = albums[aid];
+        album.id = aid;
+        albumsArray.push(album);
+        
     });
 
     albumsArray.sort(function(a,b) {
-        if ((a.decryptedTitle || "Untitled Album").toUpperCase() < (b.decryptedTitle || "Untitled Album").toUpperCase()) {
+        if (sortableExifDate(b.date) < sortableExifDate(a.date)) {
             return -1;
         } else {
             return 1;
         }
     });
 
-    albumsArray.forEach(album => {
-        aid = album.id;
-        var albumName = album.decryptedTitle;
-        if (aid === activeAlbumID) {
-            $("#albums-for-moving").append(`<button class="radio" group="move" val="${aid}" disabled>${albumName}</button>`);        
-        } else {
-            $("#albums-for-moving").append(`<button class="bold radio" group="move" val="${aid}">${albumName}</button>`);        
-        }
+    let albumsHTML = [];
+    albumsArray.forEach((album, index) => {
+        albumsHTML.push(renderAlbumForMoveModal(album, index));
     });
 
+    $("#albums-for-moving").append(albumsHTML.join("\n"));
+
     showModal("modal-move");
+
+    Object.keys(albums).forEach((aid, index) => {
+        if (aid === "favorites" || aid === "home") { return; }
+        downloadMoveModalThumbnail(albums[aid]);
+    });
 }
 
+/**
+ * Downloads thumbnails for the move modal. We're cutting some corners for speed here, hence the new function
+ * @param {*} album 
+ * @param {*} index 
+ * @returns 
+ */
+async function downloadMoveModalThumbnail(album, index){
+    
+    let thumbImgID = album.thumb || "";
+    let thumbToken = album.ttoken || "";
+    if (!thumbImgID) { return false; }
+
+    let thumbURL = album.thumbSizeURL;
+    if (!thumbURL) {
+        
+        // this allows us to wait just a little bit to offset downloading images in the correct order (and we make sure they appear correctly in CSS too)
+        await promiseToWait(50 * index);
+        thumbURL = await getMedia(thumbImgID, "t", "url", thumbToken);
+
+    }
+    
+    var img = new Image();
+    img.src = thumbURL;
+    img.setAttribute("draggable", false);
+    img.setAttribute("thumb", thumbImgID);
+
+    // if we already had the thumb url, no need to decode again
+    if (!album.thumbSizeURL) { 
+
+        try {
+            await img.decode(); 
+        } catch (error) {
+            error.imgID = thumbImgID;
+            error.token = thumbToken;        
+            handleError("[GET THUMBNAIL] Couldn't decode thumbnail", error);
+            return false;
+        }
+
+        // as long as we don't revoke these URLs, this essentially caches small album thumbnails for us during the seesion.
+        albums[album.id].thumbSizeURL = thumbURL;
+
+    }
+    
+    $(`img[thumb="${thumbImgID}"]`).replaceWith(img);
+    
+    await promiseToWait(50);
+    
+    $(`img[thumb="${thumbImgID}"]`).parent().addClass("loaded");
+}
 
 
 /**

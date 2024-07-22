@@ -23,6 +23,15 @@ function hideSorter() {
 }
 
 
+function showDownloadSizePicker() { 
+    if (selectedPhotos().length < 1) { return; }
+    $("#download-size-picker").addClass("shown");
+}
+
+function hideDownloadSizePicker() {
+    $("#download-size-picker").removeClass("shown");
+}
+
 
 function stopMainProgress() {
     $("#main-progress").attr("value", 100);
@@ -280,6 +289,7 @@ function navbarForSelectionModeOff() {
 
 function resetNavbar() {
     $("body").removeClass("nav-album nav-gallery nav-nophotos nav-favorites");
+    resetAlbumFilters();
 }
 
 if (!isTouch && !isipados) {
@@ -746,7 +756,28 @@ $("main").on('click', function(event) {
     hideSorter();
 }); 
 
+$(".filter-button").on('click', function(event) {
+    
+    $(this).toggleClass("selected");
 
+    var filtertype = $(this).attr("type");
+
+    if ($(this).hasClass("selected")) {
+        $("body").attr("filter-"+filtertype, true);
+    } else {
+        $("body").removeAttr("filter-"+filtertype);
+    }
+
+    updateLightboxSort();
+    
+});
+
+function resetAlbumFilters() {
+    $("body").removeAttr("filter-fav-only");
+    $("body").removeAttr("filter-raw-only");
+    $(".filter-button").removeClass("selected");
+    updateLightboxSort();
+}
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
