@@ -191,8 +191,18 @@ function updateAlbumNavbar() {
     var numberOfPhotosInAlbum = (albums[activeAlbumID].photos || []).length || 0;
     if (numberOfPhotosInAlbum <= 0) {
         navbarForNoPhotos();
+    } else {
+        // Add this line to display the item count
+        displayAlbumItemCount(numberOfPhotosInAlbum);
     }
 }
+
+// Add this new function
+function displayAlbumItemCount(count) {
+    // Assuming there's an element to display the count
+    $("#album-item-count").text(count + " items");
+}
+
 
 
 

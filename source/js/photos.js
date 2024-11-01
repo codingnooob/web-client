@@ -12,7 +12,7 @@ function showSorter() {
     }
 }
 
-// hook this up to scroll, click to album contents, and a few other things. 
+// hook this up to scroll, click to album contents, and a few other things.
 // (or when user clicks outside this etc)
 
 function hideSorter() {
@@ -23,7 +23,7 @@ function hideSorter() {
 }
 
 
-function showDownloadSizePicker() { 
+function showDownloadSizePicker() {
     if (selectedPhotos().length < 1) { return; }
     $("#download-size-picker").addClass("shown");
 }
@@ -136,21 +136,21 @@ $(".contents").on('click', '.media', function(event) {
     }
 
     activityHappened();
-}); 
+});
 
 
 $(".contents").on('click', '.album', function(event) {
     var albumID = $(this).attr("id");
-    
+
     if (event.target.tagName.toUpperCase() === "I") {
         showEditAlbumPopup(albumID);
     } else {
         hideAllPopups();
         loadAlbum(albumID);
     }
-    
+
     activityHappened();
-}); 
+});
 
 // right click on album opens context menu
 $("#albumContents").on('contextmenu', '.album', function(event) {
@@ -161,7 +161,7 @@ $("#albumContents").on('contextmenu', '.album', function(event) {
     activityHappened();
 
     return false;
-}); 
+});
 
 
 
@@ -169,13 +169,13 @@ $("#gallery-button").on('click', function(event) {
     loadAlbum("home");
     hideAllPopups();
     activityHappened();
-}); 
+});
 
 $("#favorites-button").on('click', function(event) {
     loadFavorites();
     hideAllPopups();
     activityHappened();
-}); 
+});
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -196,7 +196,7 @@ key('command+F, ctrl+F', function () {
 });
 
 key('esc', function () {
-    // clearing search also scrolls up. 
+    // clearing search also scrolls up.
     // and we may be using lightbox in search results (albeit very unlikely)
     // so, this guarantees that if we press escape, and lightbox is visible, we won't clear search / scroll.
     if (!$("#lightbox").hasClass("show")) {
@@ -204,7 +204,7 @@ key('esc', function () {
     } else {
         closeLightbox();
     }
-    
+
     hideAllPopups();
     clearSelections();
     activityHappened();
@@ -214,7 +214,7 @@ key('esc', function () {
 });
 
 var keyScrolling = false;
-var keyScrollThrottleSpeed = 500; 
+var keyScrollThrottleSpeed = 500;
 if (isSafari) { keyScrollThrottleSpeed = 1000; }
 
 key('down', function() {
@@ -259,16 +259,18 @@ key('m', function() { muteUnmuteActiveVideo(); });
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-//	NAVBAR STATES 
+//	NAVBAR STATES
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
 function navbarForGallery() {
     $("body").addClass("nav-gallery");
+    $("#album-item-count").hide();
 }
 
 function navbarForAlbum() {
     $("body").addClass("nav-album");
+    $("#album-item-count").show(); // Add this line
 }
 
 function navbarForFavorites() {
@@ -295,8 +297,8 @@ function resetNavbar() {
 if (!isTouch && !isipados) {
     $("#delete-button").on('mouseenter', function(event) {
         $("body").addClass("highlight-deletions");
-    }); 
-    
+    });
+
     $("#delete-button").on('mouseleave', function(event) {
         $("body").removeClass("highlight-deletions");
     });
@@ -316,10 +318,10 @@ if (!isTouch && !isipados) {
 ////////////////////////////////////////////////
 
 /**
- * 
+ *
  * @param {string} id A media ID (i.e. t-12345)
  * @param {('p'|'t'|'l'|'v'|'r')} type A media type (i.e. "l" for lightbox)
- * @returns {string} convertedID the new, converted media ID 
+ * @returns {string} convertedID the new, converted media ID
  */
 function convertID(id,type) {
     if (id) {
@@ -388,7 +390,7 @@ function dateFromEXIF(exifDateString) {
 
     return result;
 }
-  
+
 
 
 /**
@@ -510,7 +512,7 @@ function sortableExifDate(dateString) {
 
 /**
  * Gets today's EXIF (or if provided with an epoch, gets an exif for the given date)
- * @param {Number} dateEpoch 
+ * @param {Number} dateEpoch
  */
 function dateToExif(dateEpoch) {
     var date;
@@ -519,7 +521,7 @@ function dateToExif(dateEpoch) {
     } else {
         date = new Date();
     }
-    
+
     var currentDay = date.getUTCDate();
     var currentMonth = date.getUTCMonth() + 1; // it's 0 based. jesus.
     var currentYear = date.getFullYear();
@@ -529,9 +531,9 @@ function dateToExif(dateEpoch) {
 function extractExifDateTime(exif) {
     var date;
 
-    // use DateTimeOriginal || DateTimeDigitized || DateTime in this exact order. 
+    // use DateTimeOriginal || DateTimeDigitized || DateTime in this exact order.
     // DateTimeOriginal = taken time, if it exists.
-    // DateTime = Edited Time, if it's edited in lightroom, if not, taken time. 
+    // DateTime = Edited Time, if it's edited in lightroom, if not, taken time.
     if (exif) {
         if (exif.DateTime) {
             if (exif.DateTime.indexOf(":") !== -1) {
@@ -561,7 +563,7 @@ function extractExifDateTime(exif) {
 
 
 
-  
+
 /**
  * Takes a PID and returns its extension from filename, i.e. "gif"
  * @param {string} pid A Photo ID
@@ -569,13 +571,13 @@ function extractExifDateTime(exif) {
  */
 function extensionOfPhoto(pid) {
     if (!pid) { return ""; }
-    
+
     var photo = photos[pid] || {};
-    
+
     if (isEmpty(photo)) { return "jpg"; }
 
     var name = photo.decryptedTitle || "Untitled.jpg";
-    
+
     return extensionFromFilename(name);
 }
 
@@ -596,7 +598,7 @@ function doWeNeedHighResThumbs() {
 }
 
 doWeNeedHighResThumbs();
-  
+
 
 /**
  * Checks the lightbox, and gets the active, currently visible photo's ID
@@ -614,8 +616,8 @@ function activePhotoID() {
 checkConnection();
 
 authenticate(function(user){
-    
-    // no need to pre-start up twice. this function may get called twice due to auth firing twice 
+
+    // no need to pre-start up twice. this function may get called twice due to auth firing twice
     // (i.e. once for sessionUser, and once for server auth user)
     // resulting in double, unnecessary calls
     if (preStartupInitiated) { return; }
@@ -634,7 +636,7 @@ authenticate(function(user){
     if (error.code === "auth/network-request-failed") {
         handleError("[HOME] Error Authenticating", error);
     }
-    
+
     location.href = "/login";
 });
 
@@ -645,7 +647,7 @@ authenticate(function(user){
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-// 
+//
 //	PRE-STARTUP
 //
 ////////////////////////////////////////////////
@@ -655,11 +657,11 @@ authenticate(function(user){
 // WE PREPARE A LIST OF ALBUMS & PREP VIRTUAL DOM. THIS WAY WE CAN SAVE TIME DOWNLOADING
 // ONCE IT'S DONE, WE SET THIS TO TRUE, AND STARTUP CONTINUES.
 
-var preStartupComplete = false; 
+var preStartupComplete = false;
 var preStartupInitiated = false;
 
 async function preStartup() {
-    
+
     var albumToLoad = getUrlParameter("album") || "home";
 
     await Promise.all([getAlbums(), getAlbumPhotos(albumToLoad), getAlbumPhotos("favorites")]);
@@ -667,7 +669,7 @@ async function preStartup() {
 
     // load all albums' info (i.e. albumnames / dates etc)
     // await getAlbums();
-    
+
     // load album's photos (or if we're home, loads all photos without albums)
     // await getAlbumPhotos(albumToLoad);
 
@@ -677,7 +679,7 @@ async function preStartup() {
 }
 
 
-// ONCE THE KEY IS READY, (OR IF IT'S IN MEMORY) 
+// ONCE THE KEY IS READY, (OR IF IT'S IN MEMORY)
 // rightKey will call startup for all apps.
 // ON THAT SIGNAL WE PUSH THE VIRTUAL DOM TO REAL DOM
 
@@ -690,15 +692,15 @@ async function startup() {
 
     // if we're still getting the album for the first time, wait before you load the album
     if (!preStartupComplete) { return setTimeout(startup, 100); }
-    
-    // no need to start up twice. this function may get called twice due to auth firing twice 
+
+    // no need to start up twice. this function may get called twice due to auth firing twice
     // (i.e. once for sessionUser, and once for server auth user)
-    // resulting in albums appearing etc twice... 
+    // resulting in albums appearing etc twice...
     // we technically nip it in the bud by preventhing this in prestartup.
     // but there's always this 100ms timer that could create a foot race, so this is here to make sure
     // we won't have a regression
-    if (startupInitiatied) { return; } 
-    
+    if (startupInitiatied) { return; }
+
     startupInitiatied = true;
 
     if (albumToLoad === "favorites" || albumToLoad === "favourites") {
@@ -741,23 +743,23 @@ if (inactivityTimeoutInMinutes && !memorizedKey) {
 ////////////////////////////////////////////////
 
 $(".sort-button").on('click', function(event) {
-    if ($(this).hasClass("selected")) { 
+    if ($(this).hasClass("selected")) {
         hideSorter();
-        return; 
+        return;
     }
 
     $(".sort-button").removeClass("selected");
     var sorttype = $(this).attr("type");
     sortThings(sorttype);
     hideSorter();
-}); 
+});
 
 $("main").on('click', function(event) {
     hideSorter();
-}); 
+});
 
 $(".filter-button").on('click', function(event) {
-    
+
     $(this).toggleClass("selected");
 
     var filtertype = $(this).attr("type");
@@ -769,7 +771,7 @@ $(".filter-button").on('click', function(event) {
     }
 
     updateLightboxSort();
-    
+
 });
 
 function resetAlbumFilters() {
@@ -801,7 +803,7 @@ if (isTouch) {
         var label = document.elementFromPoint(fingerX, fingerY);
         scrollWithTimeline(label);
     });
-    
+
     $("#timeline").on('touchend', function(e) {
         setTimeout(function () {
             $("main").removeClass("browsing");
@@ -831,7 +833,7 @@ $("#lightbox-favorite").on('click', function(event) {
         favoritePhoto(activePhotoID());
         $("#lightbox-favorite").addClass("fav");
     }
-}); 
+});
 
 
 
@@ -844,18 +846,18 @@ $("#lightbox-favorite").on('click', function(event) {
 
 $("#searchInput").on('keydown', function (event) {
     // set a unique search id to the searchContents
-    
+
     event = event || {};
-    
+
     activityHappened();
-    
+
     setTimeout(function(){
-        var searchID = newUUID(4); 
+        var searchID = newUUID(4);
         $("#searchContents").attr("search", searchID);
-        
+
         var searchTerm = $("#searchInput").val().trim();
         $("#searchContents").attr("term", searchTerm);
-        
+
 
         if (event.key.startsWith("Arrow")) {
             event.preventDefault();
@@ -874,19 +876,19 @@ $("#searchInput").on('keydown', function (event) {
         } else if (event.key === "Enter") {
             $("#searchInput").trigger("blur");
         } else {
-            
+
             startMainProgress(false, true);
 
             clearTimeout(searchTimer);
             clearTimeout(searchKeydownTimer);
-            searchKeydownTimer = setTimeout(function () { 
-                
-                search(searchTerm, searchID); 
-                
+            searchKeydownTimer = setTimeout(function () {
+
+                search(searchTerm, searchID);
+
             }, 700);
-            
+
         }
-        
+
     },50);
 });
 
@@ -911,38 +913,38 @@ function showChangeCoverPopup() {
 ////////////////////////////////////////////////
 
 $("#photos-tags-input").on('keydown keypress paste copy cut change', function(event) {
-    
+
     if (event.key === "Enter") { event.preventDefault(); return false; }
-    if (event.key === "Escape") { 
-        event.preventDefault(); 
+    if (event.key === "Escape") {
+        event.preventDefault();
         hideTagsPanel();
-        return false; 
+        return false;
     }
 
     setTimeout(function () {
 
         var userInput = $("#photos-tags-input").val();
-        
+
         // remove newlines (i.e. if user pastes them)
         if (userInput.includes("\r") || userInput.includes("\n")) {
             userInput = userInput.replace(/[\r\n]/g, '');
-            
+
             // remove newlines from the text input
             $("#photos-tags-input").val(userInput);
         }
 
         // remove html entities (i.e. if user pastes them)
         userInput = stripHTMLEntities(userInput);
-            
+
         // remove html entities from the text input
         $("#photos-tags-input").val(userInput);
 
         // remove all characters after 100th
-        if (userInput.length > 100) {    
-            userInput = userInput.substring(0,100);    
+        if (userInput.length > 100) {
+            userInput = userInput.substring(0,100);
             $("#photos-tags-input").val(userInput);
         }
-        
+
         // get tags
         var tags = extractHashtags(userInput);
 
@@ -952,7 +954,7 @@ $("#photos-tags-input").on('keydown keypress paste copy cut change', function(ev
 
     }, 10);
 
-}); 
+});
 
 function showTagsPanel() {
     $("body").addClass("tagging");
@@ -994,18 +996,18 @@ function hideTagsPanel() {
 ////////////////////////////////////////////////
 
 $("#photos-desc").on('keydown', function(event) {
-    
+
     event = event || {};
-    
+
     activityHappened();
-    
+
     setTimeout(function(){
-    
+
         if (event.key === "Escape") {
             event.preventDefault();
             $("#photo-desc").trigger("blur");
         }
-        
+
     },50);
 
-}); 
+});
